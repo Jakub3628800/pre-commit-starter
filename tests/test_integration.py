@@ -1,12 +1,14 @@
 """Integration tests for the pre-commit-starter tool."""
+
 import argparse
-import os
-import sys
-from pathlib import Path
+import re
 
 import yaml
 
 from src.main import run_generation
+
+# Constants
+FRONTEND_TECH_COUNT = 3
 
 
 def create_args(path, force=False):
@@ -33,7 +35,7 @@ def test_python_repo_workflow(sample_python_repo, expected_python_config, capsys
     assert config_path.exists()
 
     # Verify config content
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path) as f:
         generated_config = f.read()
 
     # Parse and check essential components
@@ -60,9 +62,7 @@ def test_python_repo_workflow(sample_python_repo, expected_python_config, capsys
     assert "check-yaml" in pre_commit_hook_ids
 
     black_repo = next(
-        repo
-        for repo in config_dict["repos"]
-        if repo["repo"] == "https://github.com/psf/black"
+        repo for repo in config_dict["repos"] if repo["repo"] == "https://github.com/psf/black"
     )
     black_hook_ids = [hook["id"] for hook in black_repo["hooks"]]
     assert "black" in black_hook_ids
@@ -81,7 +81,7 @@ def test_mixed_repo_workflow(sample_mixed_repo, expected_mixed_config, capsys):
     assert config_path.exists()
 
     # Verify config content
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path) as f:
         generated_config = f.read()
 
     # Parse and check essential components
@@ -99,7 +99,6 @@ def test_mixed_repo_workflow(sample_mixed_repo, expected_mixed_config, capsys):
 
     # Check at least one specific hook for each technology
     # Not all repos might be included depending on the detection confidence
-    must_have_hooks = []
 
     # Check pre-commit hooks
     pre_commit_hooks_repo = next(
@@ -135,7 +134,7 @@ def test_frontend_repo_workflow(sample_frontend_repo, expected_frontend_config, 
     assert config_path.exists()
 
     # Verify config content
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path) as f:
         generated_config = f.read()
 
     # Parse and check essential components
@@ -148,7 +147,7 @@ def test_frontend_repo_workflow(sample_frontend_repo, expected_frontend_config, 
 
     # At least 3 frontend technologies should be detected
     assert (
-        techs_mentioned >= 3
+        techs_mentioned >= FRONTEND_TECH_COUNT
     ), f"Only {techs_mentioned} frontend technologies detected in: {header}"
 
     # Check essential repos are included
@@ -199,7 +198,7 @@ def test_go_repo_workflow(sample_go_repo, expected_go_config, capsys):
     assert config_path.exists()
 
     # Verify config content
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path) as f:
         generated_config = f.read()
 
     # Parse and check essential components
@@ -260,7 +259,7 @@ fn main() {
     assert config_path.exists()
 
     # Verify config content
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path) as f:
         generated_config = f.read()
 
     # Parse and check essential components
@@ -332,4 +331,8 @@ def test_invalid_path(capsys):
     run_generation(args)
     captured = capsys.readouterr()
 
-    assert "Error: /nonexistent/path is not a valid directory" in captured.out
+    # Remove ANSI escape sequences from the output
+    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+    clean_output = ansi_escape.sub("", captured.out)
+
+    assert "Error: /nonexistent/path is not a valid directory" in clean_output

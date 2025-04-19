@@ -1,9 +1,6 @@
 """Tests for specific regex patterns in file_scanner.py."""
-import re
-import tempfile
-from pathlib import Path
 
-import pytest
+import re
 
 from src.file_scanner import FileScanner
 

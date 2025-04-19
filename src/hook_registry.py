@@ -1,14 +1,13 @@
 """Hook registry module containing all pre-commit hook configurations."""
-from typing import Any, Dict, List, Optional
 
-import yaml
+from typing import Any, ClassVar, Dict, List
 
 
 class HookRegistry:
     """Registry of all available pre-commit hooks."""
 
     # Descriptions for hooks to provide more context in interactive mode
-    HOOK_DESCRIPTIONS = {
+    HOOK_DESCRIPTIONS: ClassVar[Dict[str, str]] = {
         # Basic hooks
         "trailing-whitespace": "Remove trailing whitespace from files",
         "end-of-file-fixer": "Ensure files end with a newline",
@@ -105,16 +104,12 @@ class HookRegistry:
                 {
                     "repo": "https://github.com/RobertCraigie/pyright-python",
                     "rev": "v1.1.391",
-                    "hooks": [
-                        {"id": "pyright", "name": "Check Python types with Pyright"}
-                    ],
+                    "hooks": [{"id": "pyright", "name": "Check Python types with Pyright"}],
                 },
                 {
                     "repo": "https://github.com/abravalheri/validate-pyproject",
                     "rev": "v0.13.0",
-                    "hooks": [
-                        {"id": "validate-pyproject", "name": "Validate pyproject.toml"}
-                    ],
+                    "hooks": [{"id": "validate-pyproject", "name": "Validate pyproject.toml"}],
                 },
                 {
                     "repo": "https://github.com/gitleaks/gitleaks",
@@ -170,9 +165,7 @@ class HookRegistry:
                         {
                             "id": "prettier",
                             "types": ["typescript"],
-                            "additional_dependencies": [
-                                "prettier-plugin-organize-imports"
-                            ],
+                            "additional_dependencies": ["prettier-plugin-organize-imports"],
                             "name": "Format TypeScript code",
                         }
                     ],
@@ -204,9 +197,7 @@ class HookRegistry:
                         {
                             "id": "prettier",
                             "types_or": ["javascript", "jsx", "typescript", "tsx"],
-                            "additional_dependencies": [
-                                "prettier-plugin-organize-imports"
-                            ],
+                            "additional_dependencies": ["prettier-plugin-organize-imports"],
                             "name": "Format React code",
                         }
                     ],
@@ -513,9 +504,7 @@ class HookRegistry:
         Returns:
             Description string, or generic message if no specific description found.
         """
-        return self.HOOK_DESCRIPTIONS.get(
-            hook_id, f"Hook '{hook_id}' (no description available)"
-        )
+        return self.HOOK_DESCRIPTIONS.get(hook_id, f"Hook '{hook_id}' (no description available)")
 
     def get_hook_ids_for_tech(self, tech: str) -> List[str]:
         """Get all hook IDs available for a technology.

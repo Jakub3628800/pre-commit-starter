@@ -24,11 +24,13 @@ Pre-commit Starter is a Python-based CLI tool that automates the generation of p
 ### 1. File Scanner (`src/detector/file_scanner.py`)
 
 #### Purpose
+
 - Analyzes repository content
 - Detects technologies and frameworks
 - Counts file types
 
 #### Implementation
+
 ```python
 class FileScanner:
     def scan_repository(self, path: str) -> dict[str, int]:
@@ -45,6 +47,7 @@ class FileScanner:
 ```
 
 #### Key Features
+
 - Recursive directory traversal
 - File extension mapping
 - Content-based detection
@@ -52,6 +55,7 @@ class FileScanner:
 - Support for various programming languages (Python, JavaScript, TypeScript, Go, Rust, etc.)
 
 #### Technology Detection Patterns
+
 The scanner uses both file extensions and content patterns to identify technologies:
 
 - **Python**: `.py`, `.pyi`, `.pyx` files and patterns like `import` statements
@@ -64,11 +68,13 @@ The scanner uses both file extensions and content patterns to identify technolog
 ### 2. Hook Registry (`src/hooks/hook_registry.py`)
 
 #### Purpose
+
 - Maintains hook definitions
 - Maps technologies to hooks
 - Manages dependencies
 
 #### Implementation
+
 ```python
 class HookRegistry:
     def get_hooks_for_tech(self, tech: str) -> list[dict]:
@@ -85,6 +91,7 @@ class HookRegistry:
 ```
 
 #### Key Features
+
 - Hook priority system
 - Version management
 - Dependency resolution
@@ -93,11 +100,13 @@ class HookRegistry:
 ### 3. YAML Builder (`src/generator/yaml_builder.py`)
 
 #### Purpose
+
 - Generates pre-commit configurations
 - Merges hook definitions
 - Ensures compatibility
 
 #### Implementation
+
 ```python
 class YAMLBuilder:
     def build_config(self) -> str:
@@ -111,6 +120,7 @@ class YAMLBuilder:
 ```
 
 #### Key Features
+
 - Smart hook merging
 - Priority-based ordering
 - Dependency deduplication
@@ -119,11 +129,13 @@ class YAMLBuilder:
 ### 4. CLI Interface (`src/main.py`)
 
 #### Purpose
+
 - User interaction
 - Command processing
 - Output formatting
 
 #### Implementation
+
 ```python
 @click.command()
 @click.option('--path', default='.')
@@ -134,6 +146,7 @@ def main(path: str, force: bool):
 ```
 
 #### Key Features
+
 - Rich text output
 - Progress indication
 - Error handling
@@ -142,6 +155,7 @@ def main(path: str, force: bool):
 ## Data Flow
 
 1. **Repository Analysis**
+
    ```mermaid
    graph LR
        A[CLI] --> B[File Scanner]
@@ -151,6 +165,7 @@ def main(path: str, force: bool):
    ```
 
 2. **Hook Selection**
+
    ```mermaid
    graph LR
        A[Technologies] --> B[Hook Registry]
@@ -186,6 +201,7 @@ The system organizes hooks into priority-based categories:
 ### Hook Merging Strategy
 
 1. **Repository Level**
+
    ```python
    def merge_repos(self, existing: dict, new: dict) -> dict:
        """Merge repository configurations."""
@@ -206,6 +222,7 @@ The system organizes hooks into priority-based categories:
 ### Version Management
 
 1. **Version Selection**
+
    - Use latest stable versions
    - Check compatibility matrix
    - Handle peer dependencies
@@ -218,6 +235,7 @@ The system organizes hooks into priority-based categories:
 ## Performance Considerations
 
 1. **Scanning Optimization**
+
    - Skip unnecessary directories
    - Use efficient file operations
    - Cache technology detection
@@ -230,6 +248,7 @@ The system organizes hooks into priority-based categories:
 ## Error Handling
 
 1. **Graceful Degradation**
+
    - Continue on non-critical errors
    - Provide helpful error messages
    - Maintain existing configuration
@@ -242,11 +261,13 @@ The system organizes hooks into priority-based categories:
 ## Future Enhancements
 
 1. **Technical Improvements**
+
    - Async file scanning
    - Plugin system
    - Configuration profiles
 
 2. **Feature Additions**
+
    - Custom hook definitions
    - CI/CD integration
    - Performance metrics
@@ -259,6 +280,7 @@ The system organizes hooks into priority-based categories:
 ## Security Considerations
 
 1. **Code Safety**
+
    - Validate hook sources
    - Check script contents
    - Verify dependencies
@@ -271,11 +293,13 @@ The system organizes hooks into priority-based categories:
 ## Testing Strategy
 
 1. **Unit Tests**
+
    - Component isolation
    - Mock external systems
    - Edge case coverage
 
 2. **Integration Tests**
+
    - Component interaction
    - Configuration generation
    - Hook execution

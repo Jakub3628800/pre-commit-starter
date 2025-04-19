@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Generate changelog from git commits."""
+
 import re
 import subprocess
 from datetime import datetime
@@ -124,9 +125,7 @@ def main():
     if changelog_path.exists():
         old_content = changelog_path.read_text()
         # Remove the old unreleased section if it exists
-        old_content = re.sub(
-            r"## \[Unreleased\].*?\n(?=## |$)", "", old_content, flags=re.DOTALL
-        )
+        old_content = re.sub(r"## \[Unreleased\].*?\n(?=## |$)", "", old_content, flags=re.DOTALL)
         content = f"{content}\n\n{old_content.strip()}"
 
     changelog_path.write_text(content)

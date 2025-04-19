@@ -5,11 +5,13 @@
 ### 1. Hook Installation Failures
 
 #### Problem: Hook installation fails with dependency errors
+
 ```
 [ERROR] Hook `hook-id` failed to install
 ```
 
 **Solution:**
+
 1. Try updating pre-commit first:
    ```bash
    make update
@@ -22,7 +24,9 @@
 ### 2. Pre-commit Taking Too Long
 
 #### Problem: Hooks are running slowly
+
 **Solution:**
+
 1. Use `--hook-stage` to run specific hooks:
    ```bash
    pre-commit run --hook-stage commit
@@ -35,7 +39,9 @@
 ### 3. Technology Detection Issues
 
 #### Problem: Missing technology detection
+
 **Solution:**
+
 1. Check if your files are in standard locations
 2. Run with verbose output:
    ```bash
@@ -46,7 +52,9 @@
 ### 4. Configuration Conflicts
 
 #### Problem: Conflicting hook configurations
+
 **Solution:**
+
 1. Check for duplicate hook entries
 2. Remove existing `.pre-commit-config.yaml`
 3. Regenerate with:
@@ -57,20 +65,24 @@
 ### 5. Common Error Messages
 
 #### `ValueError: Repo unknown`
+
 - Ensure hook repository URLs are correct
 - Try running `pre-commit autoupdate`
 
 #### `ModuleNotFoundError`
+
 - Install development dependencies:
   ```bash
   make install
   ```
 
 #### `Permission denied`
+
 - Check file permissions
 - Run with appropriate permissions
 
 #### `error: look-behind requires fixed-width pattern`
+
 - This is a regex error that can occur in Python regex patterns
 - The issue has been fixed in recent versions by replacing look-behind assertions with simpler patterns
 - If you encounter this, update to the latest version or simplify your regex patterns
@@ -85,6 +97,7 @@
 ### 7. Getting Help
 
 If you encounter issues not covered here:
+
 1. Check the [GitHub Issues](https://github.com/yourusername/pre-commit-starter/issues)
 2. Run with `--verbose` flag for detailed output
 3. Include error messages and debug logs when reporting issues
@@ -92,6 +105,7 @@ If you encounter issues not covered here:
 ## Quick Reference
 
 ### Common Commands
+
 ```bash
 # Install dependencies and hooks
 make install
@@ -110,6 +124,7 @@ SKIP=hook-id git commit -m "message"
 ```
 
 ### Debug Commands
+
 ```bash
 # Run with verbose output
 python -m src.main --verbose

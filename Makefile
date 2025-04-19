@@ -65,7 +65,7 @@ docs: dev-install  ## Generate documentation
 	@echo "Documentation generated in docs/index.html"
 
 build: dev-install  ## Build package
-	$(VENV)/bin/build
+	$(VENV)/bin/python -m build
 
 release: check-all  ## Create a new release
 	@echo "Creating new release..."

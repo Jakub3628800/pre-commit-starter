@@ -1,9 +1,7 @@
 """Tests for the YAML builder module."""
-import os
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
-import pytest
+import os
+
 import yaml
 
 from src.hook_registry import HookRegistry
@@ -13,7 +11,7 @@ from src.yaml_builder import YAMLBuilder
 def load_expected_config(filename):
     """Load expected config from file."""
     config_path = os.path.join(os.path.dirname(__file__), "expected_configs", filename)
-    with open(config_path, "r", encoding="utf-8") as f:
+    with open(config_path) as f:
         return f.read()
 
 
@@ -39,25 +37,19 @@ def test_python_config_generation():
 
     # Check essential hooks are included
     black_repo = next(
-        repo
-        for repo in config_dict["repos"]
-        if repo["repo"] == "https://github.com/psf/black"
+        repo for repo in config_dict["repos"] if repo["repo"] == "https://github.com/psf/black"
     )
     black_hook_ids = [hook["id"] for hook in black_repo["hooks"]]
     assert "black" in black_hook_ids
 
     isort_repo = next(
-        repo
-        for repo in config_dict["repos"]
-        if repo["repo"] == "https://github.com/pycqa/isort"
+        repo for repo in config_dict["repos"] if repo["repo"] == "https://github.com/pycqa/isort"
     )
     isort_hook_ids = [hook["id"] for hook in isort_repo["hooks"]]
     assert "isort" in isort_hook_ids
 
     flake8_repo = next(
-        repo
-        for repo in config_dict["repos"]
-        if repo["repo"] == "https://github.com/pycqa/flake8"
+        repo for repo in config_dict["repos"] if repo["repo"] == "https://github.com/pycqa/flake8"
     )
     flake8_hook_ids = [hook["id"] for hook in flake8_repo["hooks"]]
     assert "flake8" in flake8_hook_ids
@@ -89,9 +81,7 @@ def test_mixed_config_generation():
     # Check essential hooks from each technology
     # Python
     black_repo = next(
-        repo
-        for repo in config_dict["repos"]
-        if repo["repo"] == "https://github.com/psf/black"
+        repo for repo in config_dict["repos"] if repo["repo"] == "https://github.com/psf/black"
     )
     black_hook_ids = [hook["id"] for hook in black_repo["hooks"]]
     assert "black" in black_hook_ids
@@ -166,7 +156,8 @@ def test_hook_merging():
         hook["id"] == "prettier" and "types" in hook and hook["types"] == ["json"]
         for hook in prettier_hooks
     )
-    # Instead of checking for JavaScript types specifically, just verify we have multiple hooks for prettier
+    # Instead of checking for JavaScript types specifically, just verify we have multiple
+    # hooks for prettier
     assert len([hook for hook in prettier_hooks if hook["id"] == "prettier"]) > 1
 
 
@@ -180,10 +171,7 @@ def test_empty_tech_detection():
 
     # Should still include basic pre-commit hooks
     assert len(config_dict["repos"]) == 1
-    assert (
-        config_dict["repos"][0]["repo"]
-        == "https://github.com/pre-commit/pre-commit-hooks"
-    )
+    assert config_dict["repos"][0]["repo"] == "https://github.com/pre-commit/pre-commit-hooks"
 
 
 def test_hook_ordering():
@@ -196,10 +184,7 @@ def test_hook_ordering():
     config_dict = yaml.safe_load(generated_config)
 
     # pre-commit-hooks should always be first
-    assert (
-        config_dict["repos"][0]["repo"]
-        == "https://github.com/pre-commit/pre-commit-hooks"
-    )
+    assert config_dict["repos"][0]["repo"] == "https://github.com/pre-commit/pre-commit-hooks"
 
     # Python hooks should come before JavaScript hooks
     python_hooks_idx = next(
@@ -225,9 +210,7 @@ def test_hook_configuration():
 
     # Check isort configuration
     isort_repo = next(
-        repo
-        for repo in config_dict["repos"]
-        if repo["repo"] == "https://github.com/pycqa/isort"
+        repo for repo in config_dict["repos"] if repo["repo"] == "https://github.com/pycqa/isort"
     )
     isort_hook = isort_repo["hooks"][0]
     assert isort_hook["args"] == ["--profile", "black"]
@@ -243,10 +226,7 @@ def test_invalid_tech():
 
     # Should only include basic pre-commit hooks
     assert len(config_dict["repos"]) == 1
-    assert (
-        config_dict["repos"][0]["repo"]
-        == "https://github.com/pre-commit/pre-commit-hooks"
-    )
+    assert config_dict["repos"][0]["repo"] == "https://github.com/pre-commit/pre-commit-hooks"
 
 
 def test_go_config_generation():
@@ -298,10 +278,7 @@ def test_frontend_config_generation():
     config_dict = yaml.safe_load(generated_config)
 
     # Check header comments
-    assert (
-        "Technologies detected: css, html, javascript, react, typescript"
-        in generated_config
-    )
+    assert "Technologies detected: css, html, javascript, react, typescript" in generated_config
     assert "To install: pre-commit install" in generated_config
 
     # Check essential repos are included

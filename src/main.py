@@ -3,14 +3,11 @@
 Pre-commit Starter
 A smart CLI tool that automatically generates pre-commit configurations based on repository content.
 """
+
 import argparse
 import logging
-import os
-import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
 
-import rich
 import yaml
 from rich.console import Console
 from rich.markdown import Markdown
@@ -31,6 +28,10 @@ logger = logging.getLogger(__name__)
 # Constants
 CONFIG_FILE = ".pre-commit-config.yaml"
 CUSTOM_HOOKS_FILE = ".pre-commit-starter-hooks.yaml"
+# Confidence thresholds
+HIGH_CONFIDENCE = 0.8
+MEDIUM_CONFIDENCE = 0.6
+LOW_CONFIDENCE = 0.4
 INTERACTIVE_HELP = """
 # Available Commands
 
@@ -55,14 +56,14 @@ def display_summary(detected_techs: dict):
 
     for tech, info in detected_techs.items():
         version_str = info.version if info.version else "Unknown"
-        confidence_str = f"{info.confidence*100:.1f}%"
+        confidence_str = f"{info.confidence * 100:.1f}%"
         confidence_style = (
             "bright_green"
-            if info.confidence > 0.8
+            if info.confidence > HIGH_CONFIDENCE
             else "green"
-            if info.confidence > 0.6
+            if info.confidence > MEDIUM_CONFIDENCE
             else "yellow"
-            if info.confidence > 0.4
+            if info.confidence > LOW_CONFIDENCE
             else "red"
         )
 
@@ -107,14 +108,14 @@ def select_technologies(detected_techs: dict, hook_registry: HookRegistry) -> li
 
     selected_techs = []
     for tech, info in detected_techs.items():
-        confidence_text = f"confidence: {info.confidence*100:.1f}%"
+        confidence_text = f"confidence: {info.confidence * 100:.1f}%"
         confidence_style = (
             "bright_green"
-            if info.confidence > 0.8
+            if info.confidence > HIGH_CONFIDENCE
             else "green"
-            if info.confidence > 0.6
+            if info.confidence > MEDIUM_CONFIDENCE
             else "yellow"
-            if info.confidence > 0.4
+            if info.confidence > LOW_CONFIDENCE
             else "red"
         )
 
@@ -122,7 +123,7 @@ def select_technologies(detected_techs: dict, hook_registry: HookRegistry) -> li
         display_hooks_for_tech(tech, hook_registry)
 
         # Default to include techs with confidence > 0.6
-        default = info.confidence > 0.6 if "confidence" in info else True
+        default = info.confidence > MEDIUM_CONFIDENCE if hasattr(info, "confidence") else True
 
         ask_text = (
             f"Include [cyan]{tech.capitalize()}[/cyan] "
@@ -135,9 +136,7 @@ def select_technologies(detected_techs: dict, hook_registry: HookRegistry) -> li
             console.print(f"[yellow]Skipped hooks for {tech.capitalize()}[/yellow]")
 
     if not selected_techs:
-        if Confirm.ask(
-            "No technologies selected. Include basic hooks only?", default=True
-        ):
+        if Confirm.ask("No technologies selected. Include basic hooks only?", default=True):
             console.print("[yellow]Including only basic hooks.[/yellow]")
         else:
             msg = "[yellow]No technologies selected. Configuration will not be generated.[/yellow]"
@@ -191,9 +190,7 @@ def run_generation(args: argparse.Namespace):
         detected_techs = scanner.scan_repository(str(repo_path))
 
         if not detected_techs:
-            console.print(
-                "[yellow]No supported file types detected in the repository.[/yellow]"
-            )
+            console.print("[yellow]No supported file types detected in the repository.[/yellow]")
             return
 
         # Display findings
@@ -226,14 +223,11 @@ def run_generation(args: argparse.Namespace):
         custom_hooks_data = None
         custom_hooks_path = repo_path / CUSTOM_HOOKS_FILE
         if custom_hooks_path.exists():
-            console.print(f"ℹ️ Found custom hooks file: {custom_hooks_path.name}")
+            console.print(f"i️ Found custom hooks file: {custom_hooks_path.name}")
             try:
-                with open(custom_hooks_path, "r", encoding="utf-8") as f:
+                with open(custom_hooks_path, encoding="utf-8") as f:
                     custom_hooks_data = yaml.safe_load(f)
-                if (
-                    not isinstance(custom_hooks_data, dict)
-                    or "repos" not in custom_hooks_data
-                ):
+                if not isinstance(custom_hooks_data, dict) or "repos" not in custom_hooks_data:
                     warning_msg = (
                         f"[yellow]Warning: Custom hooks file '{custom_hooks_path.name}' "
                         f"does not have the expected format "
@@ -276,9 +270,7 @@ def run_generation(args: argparse.Namespace):
         # Display the config in dry-run mode
         if args.dry_run:
             display_configuration(config)
-            console.print(
-                "\n[yellow]Dry run mode: Configuration not written to disk.[/yellow]"
-            )
+            console.print("\n[yellow]Dry run mode: Configuration not written to disk.[/yellow]")
             return
 
         # Write configuration
@@ -289,7 +281,7 @@ def run_generation(args: argparse.Namespace):
         display_next_steps()
 
     except Exception as e:
-        console.print(f"[red]Error: {str(e)}[/red]")
+        console.print(f"[red]Error: {e!s}[/red]")
 
 
 def main():

@@ -61,7 +61,27 @@ exclude = [
 [tool.ruff]
 line-length = 100
 target-version = "py38"
+
+[tool.ruff.lint]
 select = ["E", "F", "B", "I", "N", "UP", "PL", "RUF"]
-ignore = []
+ignore = ["PLR0912", "PLR0915"]
 fixable = ["I", "F", "RUF"]
 unfixable = []
+
+[tool.ruff.lint.per-file-ignores]
+"src/file_scanner.py" = ["PLR0912", "PLR0915"]
+"src/yaml_builder.py" = ["PLR0912"]
+
+[tool.black]
+line-length = 100
+target-version = ["py38"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | build
+  | dist
+)/
+'''

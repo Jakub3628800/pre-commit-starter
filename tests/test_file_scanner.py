@@ -9,6 +9,22 @@ import pytest
 
 from src.file_scanner import FileScanner
 
+# Constants for confidence thresholds used in tests
+HIGH_CONFIDENCE = 0.7
+MEDIUM_CONFIDENCE = 0.5
+LOW_CONFIDENCE = 0.4
+VERY_LOW_CONFIDENCE = 0.3
+
+# Constants for file counts used in tests
+MIN_PYTHON_COUNT = 3
+MIN_JS_COUNT = 2
+MIN_HTML_COUNT = 2
+MIN_CSS_COUNT = 1
+MIN_REACT_COUNT = 1
+MIN_TS_COUNT = 1
+MIN_CONTENT_PYTHON_COUNT = 2
+FRONTEND_TECH_COUNT = 3
+
 # Define mapping of technologies to file extensions for property-based testing
 TECH_MAP = {
     "python": [".py"],
@@ -47,8 +63,8 @@ def test_python_repo_detection(temp_repo_dir: Path) -> None:
     detected = scanner.scan_repository(str(temp_repo_dir))
 
     assert "python" in detected
-    assert detected["python"].confidence >= 0.7
-    assert detected["python"].count >= 3
+    assert detected["python"].confidence >= HIGH_CONFIDENCE
+    assert detected["python"].count >= MIN_PYTHON_COUNT
 
     markers = scanner.get_detected_markers()
     assert "requirements.txt" in markers["python"]
@@ -109,13 +125,13 @@ def test_web_tech_detection(temp_repo_dir: Path) -> None:
 
     # Check HTML detection
     assert "html" in detected
-    assert detected["html"].confidence >= 0.5
-    assert detected["html"].count >= 2
+    assert detected["html"].confidence >= MEDIUM_CONFIDENCE
+    assert detected["html"].count >= MIN_HTML_COUNT
 
     # Check CSS detection
     assert "css" in detected
-    assert detected["css"].confidence >= 0.5  # Lowered from 0.6
-    assert detected["css"].count >= 1
+    assert detected["css"].confidence >= MEDIUM_CONFIDENCE  # Lowered from 0.6
+    assert detected["css"].count >= MIN_CSS_COUNT
 
 
 def test_mixed_repo_detection(temp_repo_dir: Path) -> None:
@@ -150,13 +166,13 @@ def test_mixed_repo_detection(temp_repo_dir: Path) -> None:
     assert "shell" in detected
 
     # Check file counts
-    assert detected["python"].count >= 2
-    assert detected["javascript"].count >= 2
-    assert detected["html"].count >= 1
-    assert detected["css"].count >= 1
-    assert detected["terraform"].count >= 1
-    assert detected["docker"].count >= 1
-    assert detected["shell"].count >= 1
+    assert detected["python"].count >= MIN_CONTENT_PYTHON_COUNT
+    assert detected["javascript"].count >= MIN_JS_COUNT
+    assert detected["html"].count >= MIN_CSS_COUNT
+    assert detected["css"].count >= MIN_CSS_COUNT
+    assert detected["terraform"].count >= MIN_CSS_COUNT
+    assert detected["docker"].count >= MIN_CSS_COUNT
+    assert detected["shell"].count >= MIN_CSS_COUNT
 
 
 def test_content_based_detection(temp_repo_dir: Path) -> None:
@@ -325,83 +341,77 @@ def test_confidence_scoring(temp_repo_dir: Path) -> None:
     detected = scanner.scan_repository(str(temp_repo_dir))
 
     # Check React confidence (should be moderate due to imports and JSX)
-    assert detected["react"].confidence >= 0.4
+    assert detected["react"].confidence >= LOW_CONFIDENCE
 
     # Check Vue confidence (should be medium due to file extension and basic template)
-    assert detected["vue"].confidence >= 0.3  # Lowered and simplified comparison
+    assert detected["vue"].confidence >= VERY_LOW_CONFIDENCE  # Lowered and simplified comparison
 
     # Check TypeScript confidence (should be low due to single file)
-    assert detected["typescript"].confidence >= 0.3
+    assert detected["typescript"].confidence >= VERY_LOW_CONFIDENCE
 
 
 def make_file_content(tech_name):
     """Generate appropriate content for testing technology detection."""
-    if tech_name == "python":
-        return (
+    content_templates = {
+        "python": (
             "import os\nimport sys\n\n"
             "def main():\n    print('Hello, Python!')\n\n"
             "if __name__ == '__main__':\n    main()"
-        )
-    elif tech_name == "javascript":
-        return (
+        ),
+        "javascript": (
             "const fs = require('fs');\n\n"
             "function main() {\n  console.log('Hello, JavaScript!');\n}\n\n"
             "main();"
-        )
-    elif tech_name == "typescript":
-        return (
+        ),
+        "typescript": (
             "import * as fs from 'fs';\n\n"
             "function main(): void {\n  console.log('Hello, TypeScript!');\n}\n\n"
             "main();"
-        )
-    elif tech_name == "react":
-        return (
+        ),
+        "react": (
             "import React from 'react';\n\n"
             "function App() {\n  return <div>Hello React</div>;\n}\n\n"
             "export default App;"
-        )
-    elif tech_name == "vue":
-        return (
+        ),
+        "vue": (
             "<template>\n  <div>Hello Vue</div>\n</template>\n\n"
             "<script>\nexport default {\n  name: 'App'\n}\n</script>"
-        )
-    elif tech_name == "svelte":
-        return "<script>\n  let name = 'world';\n</script>\n\n<h1>Hello {name}!</h1>"
-    elif tech_name == "terraform":
-        return (
+        ),
+        "svelte": "<script>\n  let name = 'world';\n</script>\n\n<h1>Hello {name}!</h1>",
+        "terraform": (
             'provider "aws" {\n  region = "us-west-2"\n}\n\n'
             'resource "aws_instance" "example" {\n'
             '  ami           = "ami-0c55b159cbfafe1f0"\n'
             '  instance_type = "t2.micro"\n}'
-        )
-    elif tech_name == "docker":
-        return 'FROM python:3.9-slim\n\nWORKDIR /app\n\nCOPY . .\n\nCMD ["python", "app.py"]'
-    elif tech_name == "shell":
-        return "#!/bin/bash\n\necho 'Hello, Shell!'\n\nfor i in {1..5}; do\n  echo $i\ndone"
-    elif tech_name == "html":
-        return (
+        ),
+        "docker": 'FROM python:3.9-slim\n\nWORKDIR /app\n\nCOPY . .\n\nCMD ["python", "app.py"]',
+        "shell": "#!/bin/bash\n\necho 'Hello, Shell!'\n\nfor i in {1..5}; do\n  echo $i\ndone",
+        "html": (
             "<!DOCTYPE html>\n<html>\n<head>\n  <title>Test</title>\n</head>\n"
             "<body>\n  <h1>Hello, HTML!</h1>\n</body>\n</html>"
-        )
-    elif tech_name == "css":
-        return "body {\n  font-family: Arial, sans-serif;\n  color: #333;\n}\n\nh1 {\n  color: blue;\n}"
-    elif tech_name == "yaml":
-        return "version: '3'\nservices:\n  web:\n    image: nginx\n    ports:\n      - \"80:80\""
-    elif tech_name == "json":
-        return '{\n  "name": "test",\n  "version": "1.0.0",\n  "description": "Test JSON file"\n}'
-    elif tech_name == "markdown":
-        return "# Test Markdown\n\nThis is a test markdown file.\n\n## Section\n\n- Item 1\n- Item 2"
-    elif tech_name == "go":
-        return 'package main\n\nimport "fmt"\n\nfunc main() {\n\tfmt.Println("Hello, Go!")\n}'
-    elif tech_name == "rust":
-        return 'fn main() {\n    println!("Hello, Rust!");\n}'
-    else:
-        return f"Sample content for {tech_name}"
+        ),
+        "css": (
+            "body {\n"
+            "  font-family: Arial, sans-serif;\n"
+            "  color: #333;\n"
+            "}\n\n"
+            "h1 {\n"
+            "  color: blue;\n"
+            "}"
+        ),
+        "yaml": "version: '3'\nservices:\n  web:\n    image: nginx\n    ports:\n      - \"80:80\"",
+        "json": '{\n  "name": "test",\n  "version": "1.0.0",\n  "description": "Test JSON file"\n}',
+        "markdown": (
+            "# Test Markdown\n\nThis is a test markdown file.\n\n## Section\n\n- Item 1\n- Item 2"
+        ),
+        "go": 'package main\n\nimport "fmt"\n\nfunc main() {\n\tfmt.Println("Hello, Go!")\n}',
+        "rust": 'fn main() {\n    println!("Hello, Rust!");\n}',
+    }
+
+    return content_templates.get(tech_name, f"Sample content for {tech_name}")
 
 
-@hypothesis.settings(
-    suppress_health_check=[hypothesis.HealthCheck.function_scoped_fixture]
-)
+@hypothesis.settings(suppress_health_check=[hypothesis.HealthCheck.function_scoped_fixture])
 @hypothesis.given(
     tech_name=hypothesis.strategies.sampled_from(list(TECH_MAP.keys())),
     file_count=hypothesis.strategies.integers(min_value=1, max_value=5),
@@ -442,9 +452,7 @@ def test_property_based_detection(temp_repo_dir, tech_name, file_count):
     if tech_name in implied_techs:
         for implied in implied_techs[tech_name]:
             if implied not in detected:
-                print(
-                    f"Warning: {tech_name} was detected but {implied} was not implied"
-                )
+                print(f"Warning: {tech_name} was detected but {implied} was not implied")
 
     # Access TechInfo object count attribute correctly
     assert (
@@ -461,8 +469,8 @@ def test_python_repo_workflow(temp_repo_dir: Path) -> None:
     detected = scanner.scan_repository(str(temp_repo_dir))
 
     assert "python" in detected
-    assert detected["python"].confidence >= 0.7
-    assert detected["python"].count >= 2
+    assert detected["python"].confidence >= HIGH_CONFIDENCE
+    assert detected["python"].count >= MIN_CONTENT_PYTHON_COUNT
 
 
 def test_mixed_repo_workflow(temp_repo_dir: Path) -> None:
@@ -474,12 +482,12 @@ def test_mixed_repo_workflow(temp_repo_dir: Path) -> None:
     detected = scanner.scan_repository(str(temp_repo_dir))
 
     assert "react" in detected
-    assert detected["react"].confidence >= 0.3
-    assert detected["react"].count >= 1
+    assert detected["react"].confidence >= VERY_LOW_CONFIDENCE
+    assert detected["react"].count >= MIN_REACT_COUNT
 
     assert "typescript" in detected
-    assert detected["typescript"].confidence >= 0.3  # Lowered from 0.6
-    assert detected["typescript"].count >= 1
+    assert detected["typescript"].confidence >= VERY_LOW_CONFIDENCE  # Lowered from 0.6
+    assert detected["typescript"].count >= MIN_TS_COUNT
 
     assert "css" in detected
     assert detected["css"].count >= 1

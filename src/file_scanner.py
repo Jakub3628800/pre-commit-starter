@@ -7,7 +7,7 @@ import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar, Dict, Optional, Set, TypedDict
+from typing import ClassVar
 
 
 @dataclass
@@ -170,7 +170,7 @@ class FileScanner:
     }
 
     # Configuration parameters that could be made configurable
-    HIDDEN_DIR_PATTERNS = [
+    HIDDEN_DIR_PATTERNS: ClassVar[list[str]] = [
         r"^\.git$",
         r"^\.svn$",
         r"^\.hg$",
@@ -179,8 +179,19 @@ class FileScanner:
         r"^node_modules$",
         r"^\.pytest_cache$",
     ]
-    MAX_FILES_TO_SCAN = 5000
-    MAX_FILE_SIZE = 10000  # bytes
+    MAX_FILES_TO_SCAN: ClassVar[int] = 5000
+    MAX_FILE_SIZE: ClassVar[int] = 10000  # bytes
+
+    # File count thresholds for confidence calculation
+    HIGH_FILE_COUNT = 10
+    MEDIUM_FILE_COUNT = 5
+    LOW_FILE_COUNT = 2
+
+    # Confidence thresholds
+    HIGH_CONFIDENCE = 0.9
+    MEDIUM_CONFIDENCE = 0.7
+    LOW_CONFIDENCE = 0.5
+    MINIMAL_CONFIDENCE = 0.3
 
     def __init__(self, repo_path: str | None = None) -> None:
         """Initialize the file scanner.
@@ -233,9 +244,7 @@ class FileScanner:
 
                 # Svelte detection
                 if "svelte" in dependencies or "svelte" in dev_dependencies:
-                    svelte_version = dependencies.get("svelte") or dev_dependencies.get(
-                        "svelte"
-                    )
+                    svelte_version = dependencies.get("svelte") or dev_dependencies.get("svelte")
                     self.tech_versions["svelte"] = svelte_version
 
         except (json.JSONDecodeError, OSError):
@@ -326,44 +335,35 @@ class FileScanner:
             return 0.0
 
         # Base confidence from count
-        if count >= 10:
-            confidence = 0.9
-        elif count >= 5:
-            confidence = 0.7
-        elif count >= 2:
-            confidence = 0.5
+        if count >= self.HIGH_FILE_COUNT:
+            confidence = self.HIGH_CONFIDENCE
+        elif count >= self.MEDIUM_FILE_COUNT:
+            confidence = self.MEDIUM_CONFIDENCE
+        elif count >= self.LOW_FILE_COUNT:
+            confidence = self.LOW_CONFIDENCE
         else:
-            confidence = 0.3
+            confidence = self.MINIMAL_CONFIDENCE
 
         # Boost confidence if we have version info
         if self.tech_versions.get(tech) is not None:
             confidence = min(1.0, confidence + 0.1)
 
         # Adjust confidence for some special cases
-        if tech == "python" and "requirements.txt" in self.detected_files.get(
-            "python", set()
-        ):
+        if tech == "python" and "requirements.txt" in self.detected_files.get("python", set()):
             confidence = min(1.0, confidence + 0.1)
 
-        if tech == "javascript" and "package.json" in self.detected_files.get(
-            "javascript", set()
-        ):
+        if tech == "javascript" and "package.json" in self.detected_files.get("javascript", set()):
             confidence = min(1.0, confidence + 0.1)
 
         return confidence
 
-    def _read_file_content(self, file_path: str, max_size: int = MAX_FILE_SIZE) -> str:
-        """Read first part of a file to identify content patterns.
-
-        Args:
-            file_path: Path to file
-            max_size: Maximum number of bytes to read (default: 10000)
-
-        Returns:
-            String content of the file (may be partial)
+    def _read_file_content(self, file_path: str, max_size: int = 10000) -> str:
+        """
+        Read a file's content up to max_size bytes.
+        Returns empty string if the file cannot be read.
         """
         try:
-            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+            with open(file_path, encoding="utf-8", errors="ignore") as f:
                 return f.read(max_size)
         except (UnicodeDecodeError, OSError, PermissionError):
             return ""
@@ -466,10 +466,7 @@ class FileScanner:
             # Update the count for tech if it was implied but not directly detected
             if tech not in self.file_counts or self.file_counts[tech] == 0:
                 for implying_tech in implied_by:
-                    if (
-                        implying_tech in self.file_counts
-                        and self.file_counts[implying_tech] > 0
-                    ):
+                    if implying_tech in self.file_counts and self.file_counts[implying_tech] > 0:
                         self.file_counts[tech] = max(1, self.file_counts.get(tech, 0))
                         # Version info could be carried over in some cases
                         if self.tech_versions.get(tech) is None:
@@ -522,16 +519,16 @@ class FileScanner:
         """
         return self.detected_files
 
-    def _has_file_with_name(self, name: str) -> bool:
-        """Check if any technology has a file with the given name.
+    def has_file_with_name(self, name: str) -> bool:
+        """Check if any technology has a file with this name.
 
         Args:
-            name: Filename to check
+            name: The filename to check for
 
         Returns:
             True if any technology has a file with this name
         """
-        for tech, files in self.detected_files.items():
+        for _tech, files in self.detected_files.items():
             if any(os.path.basename(file) == name for file in files):
                 return True
         return False

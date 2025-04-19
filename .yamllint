@@ -1,0 +1,20 @@
+---
+extends: default
+
+rules:
+  document-start: disable
+  line-length:
+    max: 120
+    level: warning
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+  truthy:
+    allowed-values: ['true', 'false', 'on', 'off', 'yes', 'no']
+
+ignore: |
+  tests/expected_configs/*.yaml

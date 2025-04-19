@@ -3,6 +3,7 @@
 ## 1. Technology Detection Improvements
 
 ### Add New Technologies
+
 - [x] HTML detection
   - File extensions: `.html`, `.htm`
   - Markers: `<!DOCTYPE html>`, `<html>`
@@ -29,6 +30,7 @@
   - Markers: `Cargo.toml`, `Cargo.lock`, `fn`, `struct`, `impl`, `mod`
 
 ### Improve Detection Logic
+
 - [x] Add content-based detection for more technologies
 - [x] Implement nested technology detection (e.g., React within JavaScript)
 - [x] Add version detection from package files
@@ -39,6 +41,7 @@
 ## 2. Testing Improvements
 
 ### Add Test Cases
+
 - [x] Test HTML detection
   - Basic HTML files
   - HTML with embedded scripts
@@ -64,6 +67,7 @@
   - Deep directory structures
 
 ### Test Infrastructure
+
 - [x] Add property-based testing with Hypothesis
 - [x] Add integration tests
 - [ ] Add performance benchmarks
@@ -73,12 +77,14 @@
 ## 3. Type System Improvements
 
 ### Add Type Hints
+
 - [x] Add complete type hints to all functions
 - [x] Add generic types where appropriate
 - [x] Add type aliases for complex types
 - [ ] Document type variables
 
 ### Static Type Checking
+
 - [ ] Add mypy configuration
 - [ ] Enable strict mypy checks
 - [ ] Add runtime type checking decorators
@@ -87,12 +93,14 @@
 ## 4. Project Infrastructure
 
 ### Pre-commit Setup
+
 - [x] Add self-generation of pre-commit config
 - [x] Add auto-update mechanism
 - [x] Add pre-push hooks
 - [x] Add commit message validation
 
 ### Makefile Improvements
+
 - [x] Add pre-commit self-generation target
 - [x] Add pre-commit auto-update target
 - [x] Add development setup target
@@ -107,6 +115,7 @@
 - [x] Add release targets
 
 ### Documentation
+
 - [x] Add docstring coverage checking
 - [x] Add API documentation generation
 - [x] Add architecture decision records
@@ -118,6 +127,7 @@
 ## 5. Code Quality
 
 ### Linting and Formatting
+
 - [x] Add ruff configuration
 - [x] Add black configuration
 - [x] Add isort configuration
@@ -125,22 +135,27 @@
 - [x] Add bandit for security checks
 
 ### Code Organization
+
 - [x] Refactor file scanner into smaller classes
 - [x] Add design patterns documentation
 - [x] Improve error handling
 - [x] Add logging
 - [-] Add telemetry (rejected: unnecessary for a simple script)
+- [x] Fix TechInfo class attribute access in select_technologies function
 
 ## 6. Build and Release
 
 ### Package Management
+
 - [x] Add pyproject.toml configuration
 - [x] Add setup.cfg configuration
 - [x] Add requirements management
 - [x] Add dependency pinning
 - [x] Add dependency auditing
+- [x] Fix build process to use Python's build module
 
 ### CI/CD
+
 - [ ] Add GitHub Actions workflow
 - [ ] Add automated releases
 - [ ] Add version bumping
@@ -150,6 +165,7 @@
 ## 7. Features
 
 ### New Features
+
 - [x] Add configuration profiles
 - [x] Add hook customization
 - [x] Add hook ordering optimization
@@ -157,6 +173,7 @@
 - [ ] Add report generation
 
 ### Improvements
+
 - [x] Add progress bars
 - [x] Add colored output
 - [x] Add verbose mode
@@ -166,6 +183,7 @@
 ## 8. Security
 
 ### Security Features
+
 - [x] Add security scanning
 - [x] Add dependency scanning
 - [ ] Add license checking
@@ -175,6 +193,7 @@
 ## 9. Performance
 
 ### Performance Improvements
+
 - [x] Add caching
 - [ ] Add parallel processing
 - [x] Add lazy loading
@@ -183,10 +202,10 @@
 
 ## 10. Community
 
-
 ## 11. Package Management Modernization
 
 ### Convert to UV
+
 - [ ] Replace pip with uv for faster package operations
 - [ ] Update Makefile to use uv instead of pip
 - [ ] Add uv.toml configuration
@@ -198,6 +217,7 @@
 ## 12. Error Handling and Logging
 
 ### Error Management
+
 - [ ] Add structured error types
 - [ ] Implement error hierarchies
 - [ ] Add error recovery strategies
@@ -205,6 +225,7 @@
 - [ ] Add error telemetry
 
 ### Logging System
+
 - [ ] Add structured logging
 - [ ] Add log rotation
 - [ ] Add log levels configuration
@@ -214,6 +235,7 @@
 ## 13. Configuration Management
 
 ### Configuration System
+
 - [ ] Add configuration file support
 - [ ] Add environment variable support
 - [ ] Add configuration validation
@@ -221,6 +243,7 @@
 - [ ] Add configuration migration tools
 
 ### Profile Management
+
 - [ ] Add configuration profiles
 - [ ] Add profile switching
 - [ ] Add profile validation
