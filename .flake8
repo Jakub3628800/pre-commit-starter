@@ -1,0 +1,5 @@
+[flake8]
+max-line-length = 100
+per-file-ignores =
+    tests/test_file_scanner.py:E501
+    src/detector/file_scanner.py:E501

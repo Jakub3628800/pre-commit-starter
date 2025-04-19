@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pre-commit-starter"
+version = "0.1.0"
+description = "A smart CLI tool that automatically generates pre-commit configurations based on repository content"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Pre-Commit Starter Team"}
+]
+keywords = ["pre-commit", "git", "hooks", "linting", "configuration", "automation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Version Control :: Git",
+]
+dependencies = [
+    "PyYAML>=6.0.1",
+    "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "hypothesis>=6.98.0",
+    "ruff>=0.2.0",
+    "pre-commit>=3.5.0",
+]
+
+[project.scripts]
+pre-commit-starter = "src.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.hatch.build]
+exclude = [
+    "tests/",
+    "docs/",
+    ".github/",
+    ".pytest_cache/",
+    ".venv/",
+    "venv/",
+    "scripts/",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+select = ["E", "F", "B", "I", "N", "UP", "PL", "RUF"]
+ignore = []
+fixable = ["I", "F", "RUF"]
+unfixable = []
