@@ -1,246 +1,59 @@
 # prec-hook-autodetect
 
-A smart CLI tool that automatically generates comprehensive pre-commit configurations based on repository content. This tool analyzes your codebase and creates a tailored `.pre-commit-config.yaml` with best practices for your specific tech stack.
+A smart CLI tool that automatically generates comprehensive pre-commit configurations based on repository content.
+
+## Using with uv
+
+```bash
+# Run directly without installing
+uvx --from git+https://github.com/Jakub3628800/pre-commit-autodetect prec-hook-autodetect
+
+# With force option to overwrite existing config
+uvx --from git+https://github.com/Jakub3628800/pre-commit-autodetect prec-hook-autodetect --force
+
+# Install as a persistent tool
+uv tool install git+https://github.com/Jakub3628800/pre-commit-autodetect
+
+# Run with specific Python version
+uvx --python 3.10 --from git+https://github.com/Jakub3628800/pre-commit-autodetect prec-hook-autodetect
+```
+
+For more information about uv tool usage, see the [uv documentation](https://docs.astral.sh/uv/guides/tools/).
 
 ## Features
 
-### 1. Automatic Technology Detection
+- Automatically detects technologies in your codebase
+- Generates optimized pre-commit configurations
+- Supports Python, JavaScript/TypeScript, Go, Rust, Terraform, Docker, and more
+- Prioritizes security checks, formatting, linting, and other quality tools
+- Allows custom hooks via `.prec-hook-autodetect-hooks.yaml`
 
-- Scans repository content to identify programming languages and frameworks
-- Supports multiple technologies including:
-  - Python
-  - JavaScript/TypeScript
-  - React/Vue/Angular/Svelte
-  - Go
-  - Rust
-  - Terraform
-  - Docker
-  - Shell scripts
-  - HTML/CSS
-  - SQL
-  - Markdown
-  - And more...
-
-### 2. Prioritized Hook Categories
-
-The generated configuration organizes hooks into priority-based categories:
-
-1. **Security Checks**
-
-   - Secret detection (Gitleaks, TruffleHog)
-   - Credential scanning
-   - Security best practices
-
-2. **Basic File Checks**
-
-   - Whitespace and EOL fixes
-   - File format validation
-   - Large file detection
-   - Merge conflict detection
-
-3. **Python Tools**
-
-   - Ruff (formatting and linting)
-   - Pyright (type checking)
-   - pyproject.toml validation
-
-4. **JavaScript/TypeScript Tools**
-
-   - Biome (formatting and linting)
-   - Prettier with plugins
-   - Import sorting
-
-5. **Web Development Tools**
-
-   - Stylelint for CSS/SCSS
-   - HTMLHint
-
-6. **Infrastructure Tools**
-
-   - Terraform formatting and validation
-   - Dockerfile linting
-   - Shell script checking
-
-7. **Documentation and Content**
-
-   - Markdown linting
-   - TOC generation
-   - Jupyter notebook formatting
-
-8. **Data and Config Validation**
-
-   - JSON Schema validation
-   - YAML linting
-   - GitHub workflow validation
-
-9. **Database and Query Tools**
-
-   - SQLFluff formatting and linting
-
-10. **Code Quality and Metrics**
-
-    - Spell checking
-    - Commit message style
-
-11. **Framework-Specific Checks**
-
-    - React ESLint rules
-    - Vue.js linting
-    - Svelte validation
-    - Angular checks
-
-12. **Performance and Bundle Size**
-
-    - Bundle size monitoring
-    - Lighthouse CI audits
-
-13. **Accessibility**
-
-    - jsx-a11y for React
-    - axe-core testing
-
-14. **Testing and Coverage**
-
-    - Jest configuration
-    - Vitest integration
-
-15. **Dependency Management**
-
-    - Package lock validation
-    - Renovate config checking
-
-16. **Framework Documentation**
-    - Compodoc for Angular
-
-## Installation
-
-1. Install the package:
-
-   ```bash
-   pip install prec-hook-autodetect
-   ```
-
-2. Run in your repository:
-
-   ```bash
-   prec-hook-autodetect
-   ```
-
-3. Install pre-commit and hooks:
-   ```bash
-   pip install pre-commit
-   pre-commit install
-   pre-commit run --all-files
-   ```
-
-## Usage
-
-### Basic Usage
+## Standard Installation
 
 ```bash
+# Install package
+pip install prec-hook-autodetect
+
+# Run in repository
 prec-hook-autodetect
+
+# Install hooks
+pre-commit install
+pre-commit run --all-files
 ```
 
-### Options
+## Options
 
 - `--path`: Specify repository path (default: current directory)
 - `--force`: Overwrite existing pre-commit config
 
-### Adding Custom Hooks
+## GitHub Action
 
-You can define your own pre-commit hooks that will be appended to the generated configuration.
+Include `.github/workflows/prec-hook-autodetect-check.yml` for CI integration that:
 
-1.  Create a file named `.prec-hook-autodetect-hooks.yaml` in the root of your repository.
-2.  Define your hooks in this file using the standard pre-commit `repos` structure. Example:
-
-    ```yaml
-    # .prec-hook-autodetect-hooks.yaml
-    repos:
-      - repo: local
-        hooks:
-          - id: my-custom-check
-            name: My Custom Check
-            entry: python -m my_package.check --arg
-            language: system
-            types: [python]
-            # Add other pre-commit hook properties as needed
-
-      - repo: https://github.com/other-hooks/some-repo
-        rev: v1.2.3
-        hooks:
-          - id: some-other-hook
-    ```
-
-3.  Run `prec-hook-autodetect` again. If the custom hooks file is found and valid, its contents will be included in the generated `.pre-commit-config.yaml`.
-
-    **Note:** The custom hooks are appended _after_ the automatically generated and sorted hooks. The tool performs basic validation to ensure the file is YAML and contains a top-level `repos` key which is a list.
-
-## GitHub Action for CI
-
-This project includes a GitHub Action workflow (`.github/workflows/prec-hook-autodetect-check.yml`) to automatically enforce code quality checks in your CI pipeline.
-
-**How it Works:**
-
-1.  **Trigger:** The action runs automatically on pushes and pull requests to your main branches (`main`, `master`).
-2.  **Setup:** It checks out your code, sets up Python, and installs `pre-commit` and `prec-hook-autodetect`.
-3.  **Generate Config:** It runs `prec-hook-autodetect --force` to create a fresh `.pre-commit-config.yaml` based on your repository's content and any custom hooks (`.prec-hook-autodetect-hooks.yaml`).
-4.  **Run Checks:** It executes `pre-commit run --all-files` using the generated configuration.
-
-**Benefits:**
-
-- Ensures consistent code style and quality across all contributions.
-- Catches common issues (like formatting errors, linting problems, secrets) before they are merged.
-- Keeps your CI aligned with the recommended hooks generated by `prec-hook-autodetect`.
-
-**Usage:**
-
-Simply include the `.github/workflows/prec-hook-autodetect-check.yml` file in your repository. GitHub Actions will automatically pick it up. You can customize the trigger branches within the workflow file if needed.
-
-## Architecture
-
-### Core Components
-
-1. **File Scanner (`src/detector/file_scanner.py`)**
-
-   - Recursively scans repository
-   - Identifies file types and technologies
-   - Maintains file type counts
-
-2. **Hook Registry (`src/hooks/hook_registry.py`)**
-
-   - Maintains available pre-commit hooks
-   - Maps technologies to appropriate hooks
-   - Handles hook dependencies
-
-3. **YAML Builder (`src/generator/yaml_builder.py`)**
-
-   - Generates pre-commit configuration
-   - Implements smart hook merging
-   - Handles version compatibility
-
-4. **CLI Interface (`src/main.py`)**
-   - Provides user interface
-   - Handles command-line arguments
-   - Displays progress and results
-
-### Key Features
-
-1. **Smart Hook Merging**
-
-   - Prevents duplicate hooks
-   - Merges compatible configurations
-   - Maintains hook priority order
-
-2. **Version Management**
-
-   - Uses latest stable versions
-   - Ensures dependency compatibility
-   - Handles peer dependencies
-
-3. **Configuration Optimization**
-   - Minimizes redundant checks
-   - Optimizes execution order
-   - Balances coverage and performance
+- Runs on pushes and PRs to main branches
+- Generates fresh configs based on repository content
+- Ensures consistent code quality across contributions
 
 ## Contributing
 
@@ -250,44 +63,6 @@ Simply include the `.github/workflows/prec-hook-autodetect-check.yml` file in yo
 4. Push to the branch
 5. Create a Pull Request
 
-## Development
-
-The project includes several make commands to simplify development tasks:
-
-```bash
-# Install development dependencies
-make dev-install
-
-# Run tests
-make test
-
-# Run linting checks
-make lint
-
-# Generate coverage report
-make coverage
-
-# Clean up build artifacts
-make clean
-
-# Remove Python cache files and test artifacts
-make cleanup
-```
-
-See the [Contributing Guide](CONTRIBUTING.md) for detailed development instructions.
-
 ## License
 
 MIT License - see LICENSE file for details
-
-## Acknowledgments
-
-- Pre-commit hooks community
-- Various linting and security tools
-- Framework maintainers
-
-## Roadmap
-
-- [ ] Add custom hook definitions
-- [x] Create GitHub Action
-- [ ] Add CI/CD templates
