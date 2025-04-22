@@ -67,7 +67,7 @@ class HookRegistry:
         self.basic_hooks = [
             {
                 "repo": "https://github.com/pre-commit/pre-commit-hooks",
-                "rev": "v4.5.0",
+                "rev": "v5.0.0",
                 "hooks": [
                     {
                         "id": "trailing-whitespace",
@@ -91,7 +91,7 @@ class HookRegistry:
             "python": [
                 {
                     "repo": "https://github.com/astral-sh/ruff-pre-commit",
-                    "rev": "v0.9.1",
+                    "rev": "v0.11.6",
                     "hooks": [
                         {"id": "ruff-format", "name": "Format Python code with Ruff"},
                         {
@@ -103,39 +103,24 @@ class HookRegistry:
                 },
                 {
                     "repo": "https://github.com/RobertCraigie/pyright-python",
-                    "rev": "v1.1.391",
+                    "rev": "v1.1.399",
                     "hooks": [{"id": "pyright", "name": "Check Python types with Pyright"}],
                 },
                 {
                     "repo": "https://github.com/abravalheri/validate-pyproject",
-                    "rev": "v0.13.0",
+                    "rev": "v0.24.1",
                     "hooks": [{"id": "validate-pyproject", "name": "Validate pyproject.toml"}],
                 },
                 {
                     "repo": "https://github.com/gitleaks/gitleaks",
-                    "rev": "v8.22.1",
+                    "rev": "v8.24.3",
                     "hooks": [{"id": "gitleaks", "name": "Detect hardcoded secrets"}],
-                },
-                {
-                    "repo": "https://github.com/psf/black",
-                    "rev": "23.12.1",
-                    "hooks": [{"id": "black"}],
-                },
-                {
-                    "repo": "https://github.com/pycqa/isort",
-                    "rev": "5.13.2",
-                    "hooks": [{"id": "isort", "args": ["--profile", "black"]}],
-                },
-                {
-                    "repo": "https://github.com/pycqa/flake8",
-                    "rev": "6.1.0",
-                    "hooks": [{"id": "flake8"}],
                 },
             ],
             "javascript": [
                 {
                     "repo": "https://github.com/pre-commit/mirrors-prettier",
-                    "rev": "v3.1.0",
+                    "rev": "v4.0.0-alpha.8",
                     "hooks": [
                         {
                             "id": "prettier",
@@ -146,7 +131,7 @@ class HookRegistry:
                 },
                 {
                     "repo": "https://github.com/pre-commit/mirrors-eslint",
-                    "rev": "v8.56.0",
+                    "rev": "v9.25.0",
                     "hooks": [
                         {
                             "id": "eslint",
@@ -160,11 +145,11 @@ class HookRegistry:
             "typescript": [
                 {
                     "repo": "https://github.com/pre-commit/mirrors-prettier",
-                    "rev": "v3.1.0",
+                    "rev": "v4.0.0-alpha.8",
                     "hooks": [
                         {
                             "id": "prettier",
-                            "types": ["typescript"],
+                            "files": r".*\.(ts|tsx)$",
                             "additional_dependencies": ["prettier-plugin-organize-imports"],
                             "name": "Format TypeScript code",
                         }
@@ -172,7 +157,7 @@ class HookRegistry:
                 },
                 {
                     "repo": "https://github.com/pre-commit/mirrors-eslint",
-                    "rev": "v8.56.0",
+                    "rev": "v9.25.0",
                     "hooks": [
                         {
                             "id": "eslint",
@@ -183,7 +168,7 @@ class HookRegistry:
                                 "eslint-plugin-import",
                                 "typescript",
                             ],
-                            "types": ["typescript"],
+                            "files": r".*\.(ts|tsx)$",
                             "name": "Lint TypeScript code",
                         }
                     ],
@@ -192,11 +177,11 @@ class HookRegistry:
             "react": [
                 {
                     "repo": "https://github.com/pre-commit/mirrors-prettier",
-                    "rev": "v3.1.0",
+                    "rev": "v4.0.0-alpha.8",
                     "hooks": [
                         {
                             "id": "prettier",
-                            "types_or": ["javascript", "jsx", "typescript", "tsx"],
+                            "files": r".*\.(js|jsx|ts|tsx)$",
                             "additional_dependencies": ["prettier-plugin-organize-imports"],
                             "name": "Format React code",
                         }
@@ -204,7 +189,7 @@ class HookRegistry:
                 },
                 {
                     "repo": "https://github.com/pre-commit/mirrors-eslint",
-                    "rev": "v8.56.0",
+                    "rev": "v9.25.0",
                     "hooks": [
                         {
                             "id": "eslint",
@@ -214,7 +199,7 @@ class HookRegistry:
                                 "eslint-plugin-react-hooks",
                                 "eslint-plugin-jsx-a11y",
                             ],
-                            "files": ".*\\.(js|jsx|ts|tsx)$",
+                            "files": r".*\.(js|jsx|ts|tsx)$",
                             "name": "Lint React code",
                         }
                     ],
@@ -223,7 +208,7 @@ class HookRegistry:
             "vue": [
                 {
                     "repo": "https://github.com/pre-commit/mirrors-prettier",
-                    "rev": "v3.1.0",
+                    "rev": "v4.0.0-alpha.8",
                     "hooks": [
                         {
                             "id": "prettier",
@@ -231,14 +216,14 @@ class HookRegistry:
                                 "prettier-plugin-organize-imports",
                                 "@vue/eslint-config-prettier",
                             ],
-                            "types_or": ["vue", "javascript", "typescript"],
+                            "files": r".*\.(vue|js|ts)$",
                             "name": "Format Vue code",
                         }
                     ],
                 },
                 {
                     "repo": "https://github.com/pre-commit/mirrors-eslint",
-                    "rev": "v8.56.0",
+                    "rev": "v9.25.0",
                     "hooks": [
                         {
                             "id": "eslint",
@@ -247,7 +232,7 @@ class HookRegistry:
                                 "eslint-plugin-vue",
                                 "@vue/eslint-config-typescript",
                             ],
-                            "types_or": ["vue", "javascript", "typescript"],
+                            "files": r".*\.(vue|js|ts)$",
                             "name": "Lint Vue code",
                         }
                     ],
@@ -256,7 +241,7 @@ class HookRegistry:
             "svelte": [
                 {
                     "repo": "https://github.com/pre-commit/mirrors-prettier",
-                    "rev": "v3.1.0",
+                    "rev": "v4.0.0-alpha.8",
                     "hooks": [
                         {
                             "id": "prettier",
@@ -264,20 +249,20 @@ class HookRegistry:
                                 "prettier-plugin-svelte",
                                 "prettier-plugin-organize-imports",
                             ],
-                            "types_or": ["svelte", "javascript", "typescript"],
+                            "files": r".*\.(svelte|js|ts)$",
                             "name": "Format Svelte code",
                         }
                     ],
                 },
                 {
                     "repo": "https://github.com/pre-commit/mirrors-eslint",
-                    "rev": "v8.56.0",
+                    "rev": "v9.25.0",
                     "hooks": [
                         {
                             "id": "eslint",
                             "args": ["--fix"],
                             "additional_dependencies": ["eslint-plugin-svelte"],
-                            "types_or": ["svelte", "javascript", "typescript"],
+                            "files": r".*\.(svelte|js|ts)$",
                             "name": "Lint Svelte code",
                         }
                     ],
@@ -291,7 +276,7 @@ class HookRegistry:
                 },
                 {
                     "repo": "https://github.com/pre-commit/mirrors-prettier",
-                    "rev": "v3.1.0",
+                    "rev": "v4.0.0-alpha.8",
                     "hooks": [
                         {
                             "id": "prettier",
@@ -309,11 +294,11 @@ class HookRegistry:
                 },
                 {
                     "repo": "https://github.com/pre-commit/mirrors-prettier",
-                    "rev": "v3.1.0",
+                    "rev": "v4.0.0-alpha.8",
                     "hooks": [
                         {
                             "id": "prettier",
-                            "types_or": ["css", "scss", "sass", "less"],
+                            "files": r".*\.(css|scss|sass|less)$",
                             "name": "Format CSS code",
                         }
                     ],
@@ -322,19 +307,19 @@ class HookRegistry:
             "yaml": [
                 {
                     "repo": "https://github.com/adrienverge/yamllint",
-                    "rev": "v1.33.0",
+                    "rev": "v1.37.0",
                     "hooks": [{"id": "yamllint", "name": "Lint YAML files"}],
                 }
             ],
             "markdown": [
                 {
                     "repo": "https://github.com/igorshubovych/markdownlint-cli",
-                    "rev": "v0.39.0",
+                    "rev": "v0.44.0",
                     "hooks": [{"id": "markdownlint", "name": "Lint Markdown files"}],
                 },
                 {
                     "repo": "https://github.com/pre-commit/mirrors-prettier",
-                    "rev": "v3.1.0",
+                    "rev": "v4.0.0-alpha.8",
                     "hooks": [
                         {
                             "id": "prettier",
@@ -372,14 +357,14 @@ class HookRegistry:
             "shell": [
                 {
                     "repo": "https://github.com/shellcheck-py/shellcheck-py",
-                    "rev": "v0.9.0.6",
+                    "rev": "v0.10.0.1",
                     "hooks": [{"id": "shellcheck", "name": "Lint shell scripts"}],
                 }
             ],
             "json": [
                 {
                     "repo": "https://github.com/pre-commit/mirrors-prettier",
-                    "rev": "v3.1.0",
+                    "rev": "v4.0.0-alpha.8",
                     "hooks": [
                         {
                             "id": "prettier",
@@ -423,7 +408,7 @@ class HookRegistry:
         self.pre_push_hooks = [
             {
                 "repo": "https://github.com/pre-commit/pre-commit-hooks",
-                "rev": "v4.5.0",
+                "rev": "v5.0.0",
                 "hooks": [
                     {
                         "id": "no-commit-to-branch",
@@ -485,7 +470,7 @@ class HookRegistry:
         """
         return {
             "repo": "https://github.com/pre-commit/pre-commit-hooks",
-            "rev": "v4.5.0",
+            "rev": "v5.0.0",
             "hooks": [
                 {
                     "id": "no-commit-to-branch",

@@ -96,9 +96,9 @@
 
 ### 7. Getting Help
 
-If you encounter issues not covered here:
+If you encounter issues not addressed in this guide:
 
-1. Check the [GitHub Issues](https://github.com/yourusername/pre-commit-starter/issues)
+1. Check the [GitHub Issues](https://github.com/yourusername/prec-hook-autodetect/issues)
 2. Run with `--verbose` flag for detailed output
 3. Include error messages and debug logs when reporting issues
 

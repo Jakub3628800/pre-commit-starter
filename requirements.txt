@@ -6,7 +6,7 @@ mdurl==0.1.2
     # via markdown-it-py
 pygments==2.19.1
     # via rich
-pyyaml==6.0.1
-    # via pre-commit-starter (pyproject.toml)
-rich==13.7.0
-    # via pre-commit-starter (pyproject.toml)
+pyyaml==6.0.2
+    # via prec-hook-autodetect (pyproject.toml)
+rich==14.0.0
+    # via prec-hook-autodetect (pyproject.toml)

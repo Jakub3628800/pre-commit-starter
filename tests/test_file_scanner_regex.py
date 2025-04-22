@@ -25,9 +25,9 @@ def test_python_import_patterns():
     ]
 
     for valid_import in valid_imports:
-        assert re.search(
-            import_pattern, valid_import
-        ), f"Failed to match valid import: {valid_import}"
+        assert re.search(import_pattern, valid_import), (
+            f"Failed to match valid import: {valid_import}"
+        )
 
     # Test valid Python from imports
     valid_from_imports = [
@@ -42,9 +42,9 @@ def test_python_import_patterns():
     ]
 
     for valid_from_import in valid_from_imports:
-        assert re.search(
-            from_import_pattern, valid_from_import
-        ), f"Failed to match valid from import: {valid_from_import}"
+        assert re.search(from_import_pattern, valid_from_import), (
+            f"Failed to match valid from import: {valid_from_import}"
+        )
 
     # Test imports with comments before them (should not match)
     commented_imports = [
@@ -58,12 +58,12 @@ def test_python_import_patterns():
     for commented_import in commented_imports:
         if commented_import.startswith("#"):
             # Python comments should not match
-            assert not re.search(
-                import_pattern, commented_import
-            ), f"Incorrectly matched commented import: {commented_import}"
-            assert not re.search(
-                from_import_pattern, commented_import
-            ), f"Incorrectly matched commented import: {commented_import}"
+            assert not re.search(import_pattern, commented_import), (
+                f"Incorrectly matched commented import: {commented_import}"
+            )
+            assert not re.search(from_import_pattern, commented_import), (
+                f"Incorrectly matched commented import: {commented_import}"
+            )
 
 
 def test_shell_script_detection():

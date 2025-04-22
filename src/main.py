@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Pre-commit Starter
+prec-hook-autodetect
 A smart CLI tool that automatically generates pre-commit configurations based on repository content.
 """
 
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 # Constants
 CONFIG_FILE = ".pre-commit-config.yaml"
-CUSTOM_HOOKS_FILE = ".pre-commit-starter-hooks.yaml"
+CUSTOM_HOOKS_FILE = ".prec-hook-autodetect-hooks.yaml"
 # Confidence thresholds
 HIGH_CONFIDENCE = 0.8
 MEDIUM_CONFIDENCE = 0.6

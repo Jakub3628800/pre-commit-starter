@@ -1,8 +1,5 @@
 {
-  "include": [
-    "src",
-    "tests"
-  ],
+  "include": ["src", "tests"],
   "typeCheckingMode": "off",
   "reportMissingImports": false,
   "reportMissingModuleSource": false

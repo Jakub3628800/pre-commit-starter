@@ -455,9 +455,9 @@ def test_property_based_detection(temp_repo_dir, tech_name, file_count):
                 print(f"Warning: {tech_name} was detected but {implied} was not implied")
 
     # Access TechInfo object count attribute correctly
-    assert (
-        detected[tech_name].count >= file_count
-    ), f"Expected at least {file_count} files but found {detected[tech_name].count}"
+    assert detected[tech_name].count >= file_count, (
+        f"Expected at least {file_count} files but found {detected[tech_name].count}"
+    )
 
 
 def test_python_repo_workflow(temp_repo_dir: Path) -> None:

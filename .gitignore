@@ -10,3 +10,7 @@ venv/
 .hypothesis/
 dist/
 .coverage
+*.egg-info/
+
+# Node.js
+node_modules/

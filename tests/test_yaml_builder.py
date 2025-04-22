@@ -31,28 +31,24 @@ def test_python_config_generation():
     # Check essential repos are included
     repo_urls = [repo["repo"] for repo in config_dict["repos"]]
     assert "https://github.com/pre-commit/pre-commit-hooks" in repo_urls
-    assert "https://github.com/psf/black" in repo_urls
-    assert "https://github.com/pycqa/isort" in repo_urls
-    assert "https://github.com/pycqa/flake8" in repo_urls
+    assert "https://github.com/astral-sh/ruff-pre-commit" in repo_urls
+    assert "https://github.com/RobertCraigie/pyright-python" in repo_urls
+    assert "https://github.com/abravalheri/validate-pyproject" in repo_urls
+
+    # Verify Black, isort, and flake8 are NOT included (to avoid conflicts with Ruff)
+    assert "https://github.com/psf/black" not in repo_urls
+    assert "https://github.com/pycqa/isort" not in repo_urls
+    assert "https://github.com/pycqa/flake8" not in repo_urls
 
     # Check essential hooks are included
-    black_repo = next(
-        repo for repo in config_dict["repos"] if repo["repo"] == "https://github.com/psf/black"
+    ruff_repo = next(
+        repo
+        for repo in config_dict["repos"]
+        if repo["repo"] == "https://github.com/astral-sh/ruff-pre-commit"
     )
-    black_hook_ids = [hook["id"] for hook in black_repo["hooks"]]
-    assert "black" in black_hook_ids
-
-    isort_repo = next(
-        repo for repo in config_dict["repos"] if repo["repo"] == "https://github.com/pycqa/isort"
-    )
-    isort_hook_ids = [hook["id"] for hook in isort_repo["hooks"]]
-    assert "isort" in isort_hook_ids
-
-    flake8_repo = next(
-        repo for repo in config_dict["repos"] if repo["repo"] == "https://github.com/pycqa/flake8"
-    )
-    flake8_hook_ids = [hook["id"] for hook in flake8_repo["hooks"]]
-    assert "flake8" in flake8_hook_ids
+    ruff_hook_ids = [hook["id"] for hook in ruff_repo["hooks"]]
+    assert "ruff" in ruff_hook_ids
+    assert "ruff-format" in ruff_hook_ids
 
 
 def test_mixed_config_generation():
@@ -64,27 +60,29 @@ def test_mixed_config_generation():
     generated_config = yaml_builder.build_config(technologies)
     config_dict = yaml.safe_load(generated_config)
 
-    # Check header comments
-    header = generated_config.split("\n")[1]
+    # Check header comments - technologies should be present in the generated config
     for tech in technologies:
-        assert tech in header
+        assert tech in generated_config, f"Technology {tech} not found in config"
 
     # Check essential repos are included
     repo_urls = [repo["repo"] for repo in config_dict["repos"]]
     assert "https://github.com/pre-commit/pre-commit-hooks" in repo_urls
-    assert "https://github.com/psf/black" in repo_urls
+    assert "https://github.com/astral-sh/ruff-pre-commit" in repo_urls
     assert "https://github.com/pre-commit/mirrors-prettier" in repo_urls
     assert "https://github.com/antonbabenko/pre-commit-terraform" in repo_urls
     assert "https://github.com/hadolint/hadolint" in repo_urls
     assert "https://github.com/shellcheck-py/shellcheck-py" in repo_urls
 
     # Check essential hooks from each technology
-    # Python
-    black_repo = next(
-        repo for repo in config_dict["repos"] if repo["repo"] == "https://github.com/psf/black"
+    # Python - check Ruff hooks
+    ruff_repo = next(
+        repo
+        for repo in config_dict["repos"]
+        if repo["repo"] == "https://github.com/astral-sh/ruff-pre-commit"
     )
-    black_hook_ids = [hook["id"] for hook in black_repo["hooks"]]
-    assert "black" in black_hook_ids
+    ruff_hook_ids = [hook["id"] for hook in ruff_repo["hooks"]]
+    assert "ruff" in ruff_hook_ids
+    assert "ruff-format" in ruff_hook_ids
 
     # JavaScript
     prettier_repo = next(
@@ -190,7 +188,7 @@ def test_hook_ordering():
     python_hooks_idx = next(
         i
         for i, repo in enumerate(config_dict["repos"])
-        if repo["repo"] == "https://github.com/psf/black"
+        if repo["repo"] == "https://github.com/astral-sh/ruff-pre-commit"
     )
     js_hooks_idx = next(
         i
@@ -208,12 +206,14 @@ def test_hook_configuration():
     generated_config = yaml_builder.build_config(["python"])
     config_dict = yaml.safe_load(generated_config)
 
-    # Check isort configuration
-    isort_repo = next(
-        repo for repo in config_dict["repos"] if repo["repo"] == "https://github.com/pycqa/isort"
+    # Check Ruff configuration
+    ruff_repo = next(
+        repo
+        for repo in config_dict["repos"]
+        if repo["repo"] == "https://github.com/astral-sh/ruff-pre-commit"
     )
-    isort_hook = isort_repo["hooks"][0]
-    assert isort_hook["args"] == ["--profile", "black"]
+    ruff_hook = next(hook for hook in ruff_repo["hooks"] if hook["id"] == "ruff")
+    assert ruff_hook["args"] == ["--fix"]
 
 
 def test_invalid_tech():

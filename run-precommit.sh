@@ -49,7 +49,7 @@ echo "Running all pre-commit checks..."
 pre-commit run --all-files
 
 # Print success message if everything passes
-if [ $? -eq 0 ]; then
+if pre-commit run --all-files; then
   echo "✅ All pre-commit checks passed!"
   exit 0
 else

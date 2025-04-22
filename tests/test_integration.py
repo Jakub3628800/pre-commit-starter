@@ -1,4 +1,4 @@
-"""Integration tests for the pre-commit-starter tool."""
+"""Integration tests for the prec-hook-autodetect tool."""
 
 import argparse
 import re
@@ -48,9 +48,15 @@ def test_python_repo_workflow(sample_python_repo, expected_python_config, capsys
     # Check essential repos are included
     repo_urls = [repo["repo"] for repo in config_dict["repos"]]
     assert "https://github.com/pre-commit/pre-commit-hooks" in repo_urls
-    assert "https://github.com/psf/black" in repo_urls
+    assert "https://github.com/astral-sh/ruff-pre-commit" in repo_urls
+    assert "https://github.com/RobertCraigie/pyright-python" in repo_urls
 
-    # Check essential hooks are included
+    # Verify Black, isort, and flake8 are NOT included (to avoid conflicts with Ruff)
+    assert "https://github.com/psf/black" not in repo_urls
+    assert "https://github.com/pycqa/isort" not in repo_urls
+    assert "https://github.com/pycqa/flake8" not in repo_urls
+
+    # Check pre-commit hooks
     pre_commit_hooks_repo = next(
         repo
         for repo in config_dict["repos"]
@@ -61,11 +67,15 @@ def test_python_repo_workflow(sample_python_repo, expected_python_config, capsys
     assert "end-of-file-fixer" in pre_commit_hook_ids
     assert "check-yaml" in pre_commit_hook_ids
 
-    black_repo = next(
-        repo for repo in config_dict["repos"] if repo["repo"] == "https://github.com/psf/black"
+    # Check Ruff hooks
+    ruff_repo = next(
+        repo
+        for repo in config_dict["repos"]
+        if repo["repo"] == "https://github.com/astral-sh/ruff-pre-commit"
     )
-    black_hook_ids = [hook["id"] for hook in black_repo["hooks"]]
-    assert "black" in black_hook_ids
+    ruff_hook_ids = [hook["id"] for hook in ruff_repo["hooks"]]
+    assert "ruff" in ruff_hook_ids
+    assert "ruff-format" in ruff_hook_ids
 
 
 def test_mixed_repo_workflow(sample_mixed_repo, expected_mixed_config, capsys):
@@ -142,13 +152,14 @@ def test_frontend_repo_workflow(sample_frontend_repo, expected_frontend_config, 
 
     # Check if key technologies are mentioned in header
     frontend_techs = ["html", "css", "javascript", "react", "typescript"]
-    header = generated_config.split("\n")[1]  # Get the technologies line
-    techs_mentioned = sum(1 for tech in frontend_techs if tech in header.lower())
+
+    # Look for technologies in the whole config header
+    techs_mentioned = sum(1 for tech in frontend_techs if tech in generated_config.lower())
 
     # At least 3 frontend technologies should be detected
-    assert (
-        techs_mentioned >= FRONTEND_TECH_COUNT
-    ), f"Only {techs_mentioned} frontend technologies detected in: {header}"
+    assert techs_mentioned >= FRONTEND_TECH_COUNT, (
+        f"Only {techs_mentioned} frontend technologies detected in the header"
+    )
 
     # Check essential repos are included
     repo_urls = [repo["repo"] for repo in config_dict["repos"]]
@@ -284,9 +295,9 @@ fn main() {
     assert "end-of-file-fixer" in pre_commit_hook_ids
 
     # Check if Rust-specific hook is present
-    assert (
-        "https://github.com/doublify/pre-commit-rust" in repo_urls
-    ), "Rust-specific hook was not included"
+    assert "https://github.com/doublify/pre-commit-rust" in repo_urls, (
+        "Rust-specific hook was not included"
+    )
 
 
 def test_empty_repo(temp_repo_dir, capsys):
