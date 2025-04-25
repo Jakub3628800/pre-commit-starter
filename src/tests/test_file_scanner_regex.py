@@ -1,8 +1,11 @@
-"""Tests for specific regex patterns in file_scanner.py."""
+"""Tests for regex-based technology detection in FileScanner."""
 
 import re
 
-from src.file_scanner import FileScanner
+from pre_commit_starter.detector.file_scanner import FileScanner
+
+# Confidence threshold for regex tests
+CONFIDENCE_THRESHOLD = 0.5  # Example threshold
 
 
 def test_python_import_patterns():

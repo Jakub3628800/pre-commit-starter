@@ -6,6 +6,7 @@ A smart CLI tool that automatically generates pre-commit configurations based on
 
 import argparse
 import logging
+import sys
 from pathlib import Path
 
 import yaml
@@ -17,17 +18,21 @@ from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 
-from .file_scanner import FileScanner
-from .hook_registry import HookRegistry
-from .yaml_builder import YAMLBuilder
+from .detector.file_scanner import FileScanner
+from .generator.hooks.hook_registry import HookRegistry
+from .generator.yaml_builder import YAMLBuilder
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",  # Simplified format without level
+    stream=sys.stdout,  # Output to stdout instead of stderr
+)
 logger = logging.getLogger(__name__)
 
 # Constants
 CONFIG_FILE = ".pre-commit-config.yaml"
-CUSTOM_HOOKS_FILE = ".prec-hook-autodetect-hooks.yaml"
+CUSTOM_HOOKS_FILE = ".pre-commit-starter-hooks.yaml"
 # Confidence thresholds
 HIGH_CONFIDENCE = 0.8
 MEDIUM_CONFIDENCE = 0.6
@@ -175,13 +180,85 @@ def display_next_steps():
     console.print(Markdown(steps))
 
 
+def validate_custom_hooks(custom_hooks_data: dict) -> bool:
+    """Validate custom hooks data."""
+    if not isinstance(custom_hooks_data, dict):
+        console.print("Error: Custom hooks file must contain a valid YAML dictionary")
+        return False
+
+    if "repos" not in custom_hooks_data:
+        console.print("Error: Custom hooks file must contain a 'repos' key")
+        return False
+
+    for repo in custom_hooks_data["repos"]:
+        if not isinstance(repo, dict):
+            console.print("Error: Each repository must be a dictionary")
+            return False
+
+        if "repo" not in repo:
+            console.print("Error: Each repository must have a 'repo' key")
+            return False
+
+        # Skip 'rev' check for local hooks
+        if repo["repo"] != "local" and "rev" not in repo:
+            console.print("Error: Each non-local repository must have a 'rev' key")
+            return False
+
+    return True
+
+
+def load_custom_hooks(repo_path: Path) -> dict | None:
+    """Loads custom hooks from the specified file in the repository root."""
+    custom_hooks_path = repo_path / CUSTOM_HOOKS_FILE
+    result = None
+
+    if custom_hooks_path.is_file():
+        try:
+            with open(custom_hooks_path, encoding="utf-8") as f:
+                custom_data = yaml.safe_load(f)
+
+            if (
+                custom_data
+                and isinstance(custom_data, dict)
+                and isinstance(custom_data.get("repos"), list)
+                and validate_custom_hooks(custom_data)
+            ):
+                logger.info("Loaded custom hooks from %s", CUSTOM_HOOKS_FILE)
+                result = custom_data
+            else:
+                logger.warning(
+                    "Custom hooks file %s is invalid or empty. Skipping.", CUSTOM_HOOKS_FILE
+                )
+        except ImportError:
+            logger.warning(
+                "PyYAML is not installed. Cannot load custom hooks from %s. Skipping.",
+                CUSTOM_HOOKS_FILE,
+            )
+        except yaml.YAMLError as e:
+            logger.warning(
+                "Error parsing custom hooks file %s: %s. Skipping.", CUSTOM_HOOKS_FILE, e
+            )
+        except OSError as e:
+            logger.warning(
+                "Error reading custom hooks file %s: %s. Skipping.", CUSTOM_HOOKS_FILE, e
+            )
+
+    return result
+
+
 def run_generation(args: argparse.Namespace):
     """Main logic for scanning and generating the config."""
     try:
         repo_path = Path(args.path).resolve()
         if not repo_path.is_dir():
             console.print(f"[red]Error: {args.path} is not a valid directory[/red]")
-            return
+            sys.exit(1)
+
+        # Check if it's a git repository
+        git_dir = repo_path / ".git"
+        if not git_dir.is_dir():
+            print("not a valid Git repository", file=sys.stderr)
+            sys.exit(1)
 
         console.print(Panel.fit("🔍 Scanning repository...", style="blue"))
 
@@ -212,53 +289,39 @@ def run_generation(args: argparse.Namespace):
         # Technology selection based on mode
         selected_techs = (
             list(detected_techs.keys())
-            if args.auto
+            if args.auto or args.force  # Skip interactive prompt if --force is used
             else select_technologies(detected_techs, hook_registry)
         )
 
         if not selected_techs:
             return  # User opted not to generate a config
 
-        # Read custom hooks if file exists
-        custom_hooks_data = None
+        # Load custom hooks
+        custom_hooks = None
         custom_hooks_path = repo_path / CUSTOM_HOOKS_FILE
         if custom_hooks_path.exists():
-            console.print(f"i️ Found custom hooks file: {custom_hooks_path.name}")
             try:
                 with open(custom_hooks_path, encoding="utf-8") as f:
                     custom_hooks_data = yaml.safe_load(f)
-                if not isinstance(custom_hooks_data, dict) or "repos" not in custom_hooks_data:
-                    warning_msg = (
-                        f"[yellow]Warning: Custom hooks file '{custom_hooks_path.name}' "
-                        f"does not have the expected format "
-                        f"(dictionary with a 'repos' key). Ignoring.[/yellow]"
-                    )
-                    console.print(warning_msg)
-                    custom_hooks_data = None
-                elif not isinstance(custom_hooks_data.get("repos"), list):
-                    warning_msg = (
-                        f"[yellow]Warning: 'repos' key in "
-                        f"custom hooks file '{custom_hooks_path.name}' "
-                        f"is not a list. Ignoring.[/yellow]"
-                    )
-                    console.print(warning_msg)
-                    custom_hooks_data = None
-
-            except yaml.YAMLError as e:
-                console.print(
-                    f"[red]Error parsing custom hooks file {custom_hooks_path.name}: {e}[/red]"
-                )
-                custom_hooks_data = None  # Don't proceed with bad custom hooks
-            except Exception as e:
-                console.print(
-                    f"[red]Error reading custom hooks file {custom_hooks_path.name}: {e}[/red]"
-                )
-                custom_hooks_data = None
+                    if not custom_hooks_data:
+                        console.print(f"Custom hooks file {CUSTOM_HOOKS_FILE} is invalid or empty")
+                    elif "repos" not in custom_hooks_data:
+                        console.print("Error parsing custom hooks file: missing 'repos' key")
+                    else:
+                        custom_hooks = custom_hooks_data["repos"]
+                        if validate_custom_hooks(custom_hooks_data):
+                            console.print(f"Loaded custom hooks from {CUSTOM_HOOKS_FILE}")
+                        else:
+                            console.print(
+                                f"Error: Custom hooks file {CUSTOM_HOOKS_FILE} is invalid"
+                            )
+                            custom_hooks = None
+            except (yaml.YAMLError, OSError) as e:
+                console.print(f"Error parsing custom hooks file: {e}")
 
         # Generate configuration
-        # Pass custom hooks data to YAMLBuilder
-        yaml_builder = YAMLBuilder(hook_registry, custom_hooks_data=custom_hooks_data)
-        config = yaml_builder.build_config(selected_techs)
+        yaml_builder = YAMLBuilder(hook_registry)
+        config = yaml_builder.build_config(selected_techs, custom_hooks=custom_hooks)
 
         # Check if config is None (might happen if custom hooks failed validation)
         if not config:
@@ -285,19 +348,25 @@ def run_generation(args: argparse.Namespace):
 
 
 def main():
-    """Parses arguments and runs the generation."""
+    """Main function for the pre-commit-starter CLI tool."""
     parser = argparse.ArgumentParser(
-        description="Generate pre-commit config based on repository content."
+        description="Generate pre-commit configuration based on repository content."
     )
     parser.add_argument(
         "--path",
+        type=str,
         default=".",
-        help="Path to the repository (default: current directory)",
+        help="Path to the repository root (default: current directory)",
     )
     parser.add_argument(
         "--force",
         action="store_true",
-        help="Overwrite existing .pre-commit-config.yaml",
+        help="Overwrite existing .pre-commit-config.yaml without prompting",
+    )
+    parser.add_argument(
+        "--list-technologies",
+        action="store_true",
+        help="List supported technologies and exit",
     )
     parser.add_argument(
         "--auto",
@@ -312,6 +381,13 @@ def main():
     parser.add_argument("--verbose", action="store_true", help="Display verbose output")
 
     args = parser.parse_args()
+
+    if args.list_technologies:
+        print("Supported technologies:")
+        for tech in sorted(HookRegistry().get_supported_technologies()):
+            print(f"- {tech}")
+        sys.exit(0)
+
     run_generation(args)
 
 

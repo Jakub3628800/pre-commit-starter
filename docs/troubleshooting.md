@@ -98,7 +98,7 @@
 
 If you encounter issues not addressed in this guide:
 
-1. Check the [GitHub Issues](https://github.com/yourusername/prec-hook-autodetect/issues)
+1. Check the [GitHub Issues](https://github.com/yourusername/pre-commit-starter/issues)
 2. Run with `--verbose` flag for detailed output
 3. Include error messages and debug logs when reporting issues
 
@@ -135,3 +135,11 @@ pre-commit autoupdate --dry-run
 # Clean and reinstall
 make clean && make install
 ```
+
+### Reporting Issues
+
+If you encounter a problem that isn't covered here, please report it:
+
+1. Check the [GitHub Issues](https://github.com/yourusername/pre-commit-starter/issues) for similar problems.
+2. If your issue is new, [create a new issue](https://github.com/yourusername/pre-commit-starter/issues/new).
+3. Provide the following information:

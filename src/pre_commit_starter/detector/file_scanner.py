@@ -1,13 +1,11 @@
 """File scanner module for detecting technologies in a repository."""
 
-from __future__ import annotations
-
 import json
 import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ClassVar
+from typing import Any, ClassVar
 
 
 @dataclass
@@ -16,8 +14,8 @@ class TechInfo:
 
     name: str
     count: int
-    version: str | None
-    confidence: float  # Confidence score for the detection
+    version: str | None = None
+    confidence: float = 0.0
 
 
 class FileScanner:
@@ -135,6 +133,9 @@ class FileScanner:
             "file_patterns": [r"\.ya?ml$"],
             "content_patterns": [],
             "version_files": [],
+            "exclude_patterns": [
+                r"\.github/workflows/.*\.ya?ml$"
+            ],  # Exclude GitHub Actions workflows
         },
         "json": {
             "file_patterns": [r"\.json$"],
@@ -144,6 +145,17 @@ class FileScanner:
         "markdown": {
             "file_patterns": [r"\.md$", r"\.markdown$"],
             "content_patterns": [],
+            "version_files": [],
+        },
+        "github_actions": {
+            "file_patterns": [r"\.github/workflows/.*\.ya?ml$"],
+            "content_patterns": [
+                r"^name:\s+.*$",
+                r"^on:\s+.*$",
+                r"^jobs:\s+.*$",
+                r"uses:\s+.*@.*$",
+                r"run:\s+.*$",
+            ],
             "version_files": [],
         },
         "go": {
@@ -188,21 +200,23 @@ class FileScanner:
     LOW_FILE_COUNT = 2
 
     # Confidence thresholds
-    HIGH_CONFIDENCE = 0.9
-    MEDIUM_CONFIDENCE = 0.7
-    LOW_CONFIDENCE = 0.5
-    MINIMAL_CONFIDENCE = 0.3
+    HIGH_CONFIDENCE: ClassVar[float] = 0.8
+    MEDIUM_CONFIDENCE: ClassVar[float] = 0.5
+    LOW_CONFIDENCE: ClassVar[float] = 0.5
+    MINIMAL_CONFIDENCE: ClassVar[float] = 0.3
 
     def __init__(self, repo_path: str | None = None) -> None:
         """Initialize the file scanner.
 
         Args:
-            repo_path: Path to repository to scan. If provided, scanning will be
+            repo_path: Path to the repository to scan. If not provided, must be set
+                before scanning. If provided, scan_repository() will be
                 called automatically.
         """
         self.file_counts: dict[str, int] = {}
         self.detected_files: dict[str, set[str]] = {}
         self.tech_versions: dict[str, str | None] = {}
+        self.repo_path: Path | None = None
 
         # Automatically scan if path provided (for test compatibility)
         if repo_path:
@@ -221,9 +235,9 @@ class FileScanner:
         """Detect versions from package.json."""
         try:
             with open(file_path, encoding="utf-8") as f:
-                data = json.load(f)
-                dependencies = data.get("dependencies", {})
-                dev_dependencies = data.get("devDependencies", {})
+                data: dict[str, Any] = json.load(f)
+                dependencies: dict[str, str] = data.get("dependencies", {})
+                dev_dependencies: dict[str, str] = data.get("devDependencies", {})
 
                 # React detection
                 if "react" in dependencies:
@@ -355,6 +369,10 @@ class FileScanner:
         if tech == "javascript" and "package.json" in self.detected_files.get("javascript", set()):
             confidence = min(1.0, confidence + 0.1)
 
+        # Special case for GitHub Actions - having any workflow files indicates high confidence
+        if tech == "github_actions" and count >= 1:
+            confidence = self.HIGH_CONFIDENCE
+
         return confidence
 
     def _read_file_content(self, file_path: str, max_size: int = 10000) -> str:
@@ -413,14 +431,22 @@ class FileScanner:
                         # Check file patterns
                         for pattern in patterns["file_patterns"]:
                             if re.search(pattern, file, re.IGNORECASE):
-                                self.file_counts[tech] += 1
-                                self.detected_files[tech].add(rel_path)
-                                file_matched = True
+                                # Check if file is excluded
+                                excluded = False
+                                if "exclude_patterns" in patterns:
+                                    for exclude_pattern in patterns["exclude_patterns"]:
+                                        if re.search(exclude_pattern, rel_path, re.IGNORECASE):
+                                            excluded = True
+                                            break
+                                if not excluded:
+                                    self.file_counts[tech] += 1
+                                    self.detected_files[tech].add(rel_path)
+                                    file_matched = True
 
-                                # Check for version files
-                                if file in patterns["version_files"]:
-                                    self._detect_version(tech, file_path)
-                                break
+                                    # Check for version files
+                                    if file in patterns["version_files"]:
+                                        self._detect_version(tech, file_path)
+                                    break
 
                     # If file already matched by name, skip content check
                     if file_matched:
@@ -457,7 +483,7 @@ class FileScanner:
             pass
 
         # Calculate the technology info with confidence scores
-        results = {}
+        results: dict[str, TechInfo] = {}
 
         # Process the automatically implied technologies
         # We need to do this before calculating confidence
@@ -532,3 +558,25 @@ class FileScanner:
             if any(os.path.basename(file) == name for file in files):
                 return True
         return False
+
+    def detect_github_actions(self) -> TechInfo | None:
+        """Detect GitHub Actions workflow files."""
+        pattern = os.path.join(".github", "workflows", "*.y*ml")
+        count = self._count_matching_files(pattern)
+        if count > 0:
+            return TechInfo(
+                name="github_actions",
+                count=count,
+                confidence=self.HIGH_CONFIDENCE if count > 1 else self.MEDIUM_CONFIDENCE,
+            )
+        return None
+
+    def _count_matching_files(self, pattern: str) -> int:
+        """Count files matching a glob pattern."""
+        if not self.repo_path:
+            return 0
+        try:
+            matching_files = list(self.repo_path.glob(pattern))
+            return len(matching_files)
+        except Exception:
+            return 0

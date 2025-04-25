@@ -1,59 +1,41 @@
-# prec-hook-autodetect
+# pre-commit-starter
 
-A smart CLI tool that automatically generates comprehensive pre-commit configurations based on repository content.
+A starter CLI tool for pre-commit configurations.
 
-## Using with uv
+## Usage
+
+### With uv
 
 ```bash
-# Run directly without installing
-uvx --from git+https://github.com/Jakub3628800/pre-commit-autodetect prec-hook-autodetect
+# Run once without installing (replace <repo_url> with actual URL)
+uvx --from git+<repo_url> pre-commit-starter [--force]
 
-# With force option to overwrite existing config
-uvx --from git+https://github.com/Jakub3628800/pre-commit-autodetect prec-hook-autodetect --force
-
-# Install as a persistent tool
-uv tool install git+https://github.com/Jakub3628800/pre-commit-autodetect
-
-# Run with specific Python version
-uvx --python 3.10 --from git+https://github.com/Jakub3628800/pre-commit-autodetect prec-hook-autodetect
+# Install as a persistent tool (replace <repo_url> with actual URL)
+uv tool install git+<repo_url>
 ```
 
-For more information about uv tool usage, see the [uv documentation](https://docs.astral.sh/uv/guides/tools/).
-
-## Features
-
-- Automatically detects technologies in your codebase
-- Generates optimized pre-commit configurations
-- Supports Python, JavaScript/TypeScript, Go, Rust, Terraform, Docker, and more
-- Prioritizes security checks, formatting, linting, and other quality tools
-- Allows custom hooks via `.prec-hook-autodetect-hooks.yaml`
-
-## Standard Installation
+### Standard Installation & Usage
 
 ```bash
-# Install package
-pip install prec-hook-autodetect
+# Install
+pip install pre-commit-starter
 
-# Run in repository
-prec-hook-autodetect
+# Run in your repository
+pre-commit-starter
 
-# Install hooks
+# Install pre-commit hooks
 pre-commit install
 pre-commit run --all-files
 ```
 
 ## Options
 
+- `--force`: Overwrite existing `.pre-commit-config.yaml`
 - `--path`: Specify repository path (default: current directory)
-- `--force`: Overwrite existing pre-commit config
 
 ## GitHub Action
 
-Include `.github/workflows/prec-hook-autodetect-check.yml` for CI integration that:
-
-- Runs on pushes and PRs to main branches
-- Generates fresh configs based on repository content
-- Ensures consistent code quality across contributions
+Use `.github/workflows/pre-commit-starter-check.yml` for CI integration to enforce checks.
 
 ## Contributing
 

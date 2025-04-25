@@ -2,7 +2,7 @@
 
 import re
 
-from src.file_scanner import FileScanner
+from pre_commit_starter.detector.file_scanner import FileScanner
 
 
 def test_frontend_repo_contents(sample_frontend_repo):

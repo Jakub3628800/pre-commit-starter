@@ -1,11 +1,15 @@
 """Tests for the YAML builder module."""
 
 import os
+from pathlib import Path
 
 import yaml
 
-from src.hook_registry import HookRegistry
-from src.yaml_builder import YAMLBuilder
+# Use absolute imports from the package
+from pre_commit_starter.generator.hooks.hook_registry import HookRegistry
+from pre_commit_starter.generator.yaml_builder import YAMLBuilder
+
+EXPECTED_REPO_COUNT = 2  # Expected number of repositories in basic configuration
 
 
 def load_expected_config(filename):
@@ -167,9 +171,15 @@ def test_empty_tech_detection():
     generated_config = yaml_builder.build_config([])
     config_dict = yaml.safe_load(generated_config)
 
-    # Should still include basic pre-commit hooks
-    assert len(config_dict["repos"]) == 1
-    assert config_dict["repos"][0]["repo"] == "https://github.com/pre-commit/pre-commit-hooks"
+    # Should include basic pre-commit hooks and gitleaks
+    assert len(config_dict["repos"]) == EXPECTED_REPO_COUNT
+    assert any(
+        repo["repo"] == "https://github.com/pre-commit/pre-commit-hooks"
+        for repo in config_dict["repos"]
+    )
+    assert any(
+        repo["repo"] == "https://github.com/gitleaks/gitleaks" for repo in config_dict["repos"]
+    )
 
 
 def test_hook_ordering():
@@ -224,9 +234,15 @@ def test_invalid_tech():
     generated_config = yaml_builder.build_config(["invalid_tech"])
     config_dict = yaml.safe_load(generated_config)
 
-    # Should only include basic pre-commit hooks
-    assert len(config_dict["repos"]) == 1
-    assert config_dict["repos"][0]["repo"] == "https://github.com/pre-commit/pre-commit-hooks"
+    # Should include basic pre-commit hooks and gitleaks
+    assert len(config_dict["repos"]) == EXPECTED_REPO_COUNT
+    assert any(
+        repo["repo"] == "https://github.com/pre-commit/pre-commit-hooks"
+        for repo in config_dict["repos"]
+    )
+    assert any(
+        repo["repo"] == "https://github.com/gitleaks/gitleaks" for repo in config_dict["repos"]
+    )
 
 
 def test_go_config_generation():
@@ -352,3 +368,31 @@ def test_rust_config_generation():
     assert "fmt" in rust_hook_ids
     assert "cargo-check" in rust_hook_ids
     assert "clippy" in rust_hook_ids
+
+
+def test_build_config_with_basic_hooks(tmp_path: Path) -> None:
+    """Test building configuration with basic hooks."""
+    builder = YAMLBuilder(HookRegistry())
+    config_str = builder.build_config([])
+    config_dict = yaml.safe_load(config_str)
+
+    # Should include basic pre-commit hooks and gitleaks
+    assert len(config_dict["repos"]) == EXPECTED_REPO_COUNT
+    assert any(
+        repo["repo"] == "https://github.com/pre-commit/pre-commit-hooks"
+        for repo in config_dict["repos"]
+    )
+
+
+def test_build_config_with_custom_hooks(tmp_path: Path) -> None:
+    """Test building configuration with custom hooks."""
+    builder = YAMLBuilder(HookRegistry())
+    config_str = builder.build_config([], custom_hooks=[{"repo": "local", "id": "test"}])
+    config_dict = yaml.safe_load(config_str)
+
+    # Should include basic pre-commit hooks and gitleaks
+    assert len(config_dict["repos"]) == EXPECTED_REPO_COUNT
+    assert any(
+        repo["repo"] == "https://github.com/pre-commit/pre-commit-hooks"
+        for repo in config_dict["repos"]
+    )

@@ -7,7 +7,17 @@ from pathlib import Path
 import hypothesis
 import pytest
 
-from src.file_scanner import FileScanner
+from pre_commit_starter.detector.file_scanner import FileScanner
+
+EXPECTED_FILE_COUNT = 2  # Expected number of files for certain technologies
+
+
+def create_test_file(path: Path, filename: str, content: str = "") -> None:
+    """Create a test file with the given content."""
+    file_path = path / filename
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_text(content)
+
 
 # Constants for confidence thresholds used in tests
 HIGH_CONFIDENCE = 0.7
@@ -491,3 +501,41 @@ def test_mixed_repo_workflow(temp_repo_dir: Path) -> None:
 
     assert "css" in detected
     assert detected["css"].count >= 1
+
+
+def test_detect_markdown(tmp_path: Path) -> None:
+    """Test detection of Markdown files."""
+    create_test_file(tmp_path, "README.md", "# Title\n\nSome content")
+    create_test_file(tmp_path, "docs/guide.markdown", "# Guide")
+
+    scanner = FileScanner(str(tmp_path))
+    techs = scanner.detect_technologies()
+
+    assert "markdown" in techs
+    assert techs["markdown"].count == EXPECTED_FILE_COUNT
+
+
+def test_detect_github_actions(tmp_path: Path) -> None:
+    """Test detection of GitHub Actions workflow files."""
+    workflow_content = """
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run tests
+        run: npm test
+"""
+    workflows_dir = tmp_path / ".github" / "workflows"
+    workflows_dir.mkdir(parents=True)
+    create_test_file(workflows_dir, "ci.yml", workflow_content)
+    create_test_file(workflows_dir, "release.yaml", workflow_content)
+
+    scanner = FileScanner(str(tmp_path))
+    techs = scanner.detect_technologies()
+
+    assert "github_actions" in techs
+    assert techs["github_actions"].count == EXPECTED_FILE_COUNT
+    assert techs["github_actions"].confidence >= scanner.MEDIUM_CONFIDENCE
