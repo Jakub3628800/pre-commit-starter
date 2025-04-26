@@ -195,8 +195,8 @@ class FileScanner:
     MAX_FILE_SIZE: ClassVar[int] = 10000  # bytes
 
     # File count thresholds for confidence calculation
-    HIGH_FILE_COUNT = 10
-    MEDIUM_FILE_COUNT = 5
+    HIGH_FILE_COUNT = 5
+    MEDIUM_FILE_COUNT = 3
     LOW_FILE_COUNT = 2
 
     # Confidence thresholds
@@ -364,10 +364,10 @@ class FileScanner:
 
         # Adjust confidence for some special cases
         if tech == "python" and "requirements.txt" in self.detected_files.get("python", set()):
-            confidence = min(1.0, confidence + 0.1)
+            confidence = min(1.0, confidence + 0.2)
 
         if tech == "javascript" and "package.json" in self.detected_files.get("javascript", set()):
-            confidence = min(1.0, confidence + 0.1)
+            confidence = min(1.0, confidence + 0.2)
 
         # Special case for GitHub Actions - having any workflow files indicates high confidence
         if tech == "github_actions" and count >= 1:

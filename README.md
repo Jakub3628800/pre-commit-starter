@@ -7,11 +7,13 @@ A starter CLI tool for pre-commit configurations.
 ### With uv
 
 ```bash
-# Run once without installing (replace <repo_url> with actual URL)
-uvx --from git+<repo_url> pre-commit-starter [--force]
+# Run once without installing
+uvx --from git+https://github.com/Jakub3628800/pre-commit-starter pre-commit-starter [--force]
+```
 
-# Install as a persistent tool (replace <repo_url> with actual URL)
-uv tool install git+<repo_url>
+```bash
+# Install as a persistent tool
+uv tool install git+https://github.com/Jakub3628800/pre-commit-starter
 ```
 
 ### Standard Installation & Usage
@@ -19,10 +21,14 @@ uv tool install git+<repo_url>
 ```bash
 # Install
 pip install pre-commit-starter
+```
 
+```bash
 # Run in your repository
 pre-commit-starter
+```
 
+```bash
 # Install pre-commit hooks
 pre-commit install
 pre-commit run --all-files

@@ -112,33 +112,33 @@ def select_technologies(detected_techs: dict, hook_registry: HookRegistry) -> li
     console.print("(Technologies with higher confidence are recommended)")
 
     selected_techs = []
-    for tech, info in detected_techs.items():
-        confidence_text = f"confidence: {info.confidence * 100:.1f}%"
+    for tech_name, tech_info in detected_techs.items():
+        confidence_text = f"confidence: {tech_info.confidence * 100:.1f}%"
         confidence_style = (
             "bright_green"
-            if info.confidence > HIGH_CONFIDENCE
+            if tech_info.confidence > HIGH_CONFIDENCE
             else "green"
-            if info.confidence > MEDIUM_CONFIDENCE
+            if tech_info.confidence > MEDIUM_CONFIDENCE
             else "yellow"
-            if info.confidence > LOW_CONFIDENCE
+            if tech_info.confidence > LOW_CONFIDENCE
             else "red"
         )
 
         # Display hooks available for this technology
-        display_hooks_for_tech(tech, hook_registry)
+        display_hooks_for_tech(tech_name, hook_registry)
 
         # Default to include techs with confidence > 0.6
-        default = info.confidence > MEDIUM_CONFIDENCE if hasattr(info, "confidence") else True
+        default = tech_info.confidence > MEDIUM_CONFIDENCE
 
         ask_text = (
-            f"Include [cyan]{tech.capitalize()}[/cyan] "
+            f"Include [cyan]{tech_name.capitalize()}[/cyan] "
             f"([{confidence_style}]{confidence_text}[/{confidence_style}])?"
         )
         if Confirm.ask(ask_text, default=default):
-            selected_techs.append(tech)
-            console.print(f"[green]✓ Added hooks for {tech.capitalize()}[/green]")
+            selected_techs.append(tech_info)
+            console.print(f"[green]✓ Added hooks for {tech_name.capitalize()}[/green]")
         else:
-            console.print(f"[yellow]Skipped hooks for {tech.capitalize()}[/yellow]")
+            console.print(f"[yellow]Skipped hooks for {tech_name.capitalize()}[/yellow]")
 
     if not selected_techs:
         if Confirm.ask("No technologies selected. Include basic hooks only?", default=True):
@@ -287,14 +287,35 @@ def run_generation(args: argparse.Namespace):
         hook_registry = HookRegistry()
 
         # Technology selection based on mode
-        selected_techs = (
-            list(detected_techs.keys())
-            if args.auto or args.force  # Skip interactive prompt if --force is used
-            else select_technologies(detected_techs, hook_registry)
-        )
-
-        if not selected_techs:
-            return  # User opted not to generate a config
+        if args.auto or args.force:
+            # In force mode, only include technologies with high confidence
+            if args.force:
+                selected_techs = [
+                    tech_info
+                    for tech_info in detected_techs.values()
+                    if tech_info.confidence > HIGH_CONFIDENCE
+                ]
+                selected_names = [tech.name for tech in selected_techs]
+                console.print(
+                    f"[blue]Selected technologies (high confidence): {selected_names}[/blue]"
+                )
+                if not selected_techs:
+                    console.print(
+                        "[yellow]No technologies detected with high confidence (>80%).[/yellow]"
+                    )
+                    console.print("[yellow]Including only basic hooks.[/yellow]")
+            else:
+                # In auto mode, include all detected technologies
+                selected_techs = list(detected_techs.values())
+                selected_names = [tech.name for tech in selected_techs]
+                console.print(f"[blue]Selected technologies (auto mode): {selected_names}[/blue]")
+        else:
+            # Interactive mode
+            selected_techs = select_technologies(detected_techs, hook_registry)
+            selected_names = [tech.name for tech in selected_techs]
+            console.print(
+                f"[blue]Selected technologies (interactive mode): {selected_names}[/blue]"
+            )
 
         # Load custom hooks
         custom_hooks = None

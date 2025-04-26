@@ -29,8 +29,7 @@ def test_python_config_generation():
 
     # Check header comments
     assert "Technologies detected: python" in generated_config
-    assert "To install: pre-commit install" in generated_config
-    assert "To update: pre-commit autoupdate" in generated_config
+    assert "https://github.com/Jakub3628800/pre-commit-starter" in generated_config
 
     # Check essential repos are included
     repo_urls = [repo["repo"] for repo in config_dict["repos"]]
@@ -255,7 +254,7 @@ def test_go_config_generation():
 
     # Check header comments
     assert "Technologies detected: go" in generated_config
-    assert "To install: pre-commit install" in generated_config
+    assert "https://github.com/Jakub3628800/pre-commit-starter" in generated_config
 
     # Check essential repos are included
     repo_urls = [repo["repo"] for repo in config_dict["repos"]]
@@ -295,7 +294,7 @@ def test_frontend_config_generation():
 
     # Check header comments
     assert "Technologies detected: css, html, javascript, react, typescript" in generated_config
-    assert "To install: pre-commit install" in generated_config
+    assert "https://github.com/Jakub3628800/pre-commit-starter" in generated_config
 
     # Check essential repos are included
     repo_urls = [repo["repo"] for repo in config_dict["repos"]]
@@ -351,7 +350,7 @@ def test_rust_config_generation():
 
     # Check header comments
     assert "Technologies detected: rust" in generated_config
-    assert "To install: pre-commit install" in generated_config
+    assert "https://github.com/Jakub3628800/pre-commit-starter" in generated_config
 
     # Check essential repos are included
     repo_urls = [repo["repo"] for repo in config_dict["repos"]]
@@ -387,12 +386,30 @@ def test_build_config_with_basic_hooks(tmp_path: Path) -> None:
 def test_build_config_with_custom_hooks(tmp_path: Path) -> None:
     """Test building configuration with custom hooks."""
     builder = YAMLBuilder(HookRegistry())
-    config_str = builder.build_config([], custom_hooks=[{"repo": "local", "id": "test"}])
+    custom_hooks = [{"repo": "local", "hooks": [{"id": "test", "name": "Test Hook"}]}]
+    config_str = builder.build_config([], custom_hooks=custom_hooks)
     config_dict = yaml.safe_load(config_str)
 
-    # Should include basic pre-commit hooks and gitleaks
-    assert len(config_dict["repos"]) == EXPECTED_REPO_COUNT
-    assert any(
-        repo["repo"] == "https://github.com/pre-commit/pre-commit-hooks"
-        for repo in config_dict["repos"]
-    )
+    # Should include basic pre-commit hooks, gitleaks, and custom hooks
+    assert len(config_dict["repos"]) == EXPECTED_REPO_COUNT + 1  # +1 for custom hooks
+    assert any(repo["repo"] == "local" for repo in config_dict["repos"])
+    assert "# Includes custom hooks from .pre-commit-starter-hooks.yaml" in config_str
+
+
+def test_blank_line_between_repos():
+    """Ensure there is a blank line between each top-level - repo: entry."""
+    hook_registry = HookRegistry()
+    yaml_builder = YAMLBuilder(hook_registry)
+    generated_config = yaml_builder.build_config(["python", "javascript", "terraform"])
+
+    lines = generated_config.splitlines()
+    repo_indices = [i for i, line in enumerate(lines) if line.lstrip().startswith("- repo:")]
+
+    # For each pair of consecutive repo indices, there should be a blank line between them
+    for idx1, idx2 in zip(repo_indices, repo_indices[1:]):
+        # There should be at least one blank line between idx1 and idx2
+        has_blank = any(lines[i].strip() == "" for i in range(idx1 + 1, idx2))
+        assert has_blank, (
+            f"No blank line between - repo: entries at lines {idx1 + 1} and {idx2 + 1}.\n"
+            "YAML output:\n" + "\n".join(lines)
+        )

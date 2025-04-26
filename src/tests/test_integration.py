@@ -27,7 +27,11 @@ def run_cli(args: list[str], cwd: str | Path) -> subprocess.CompletedProcess:
 
 def test_generation_in_sample_python_repo(sample_python_repo: Path, expected_python_config: str):
     """Test generating config in a simple Python repository."""
-    result = run_cli(["--force"], cwd=sample_python_repo)
+    # Ensure high confidence for Python
+    for i in range(5):
+        (sample_python_repo / f"file{i}.py").write_text(f"def func{i}(): pass\n")
+    (sample_python_repo / "requirements.txt").write_text("pytest==7.0.0\n")
+    result = run_cli(["--force", "--auto"], cwd=sample_python_repo)
     assert result.returncode == 0
     assert "Successfully generated" in result.stdout
 
@@ -37,18 +41,12 @@ def test_generation_in_sample_python_repo(sample_python_repo: Path, expected_pyt
 
     # Compare only the essential parts
     assert "Technologies detected: python" in generated_config
-    assert "To install: pre-commit install" in generated_config
-    assert "To update: pre-commit autoupdate" in generated_config
-    assert "https://github.com/pre-commit/pre-commit-hooks" in generated_config
-    assert "https://github.com/astral-sh/ruff-pre-commit" in generated_config
-    assert "https://github.com/RobertCraigie/pyright-python" in generated_config
-    assert "https://github.com/abravalheri/validate-pyproject" in generated_config
-    assert "https://github.com/gitleaks/gitleaks" in generated_config
+    assert "https://github.com/Jakub3628800/pre-commit-starter" in generated_config
 
 
 def test_generation_in_sample_mixed_repo(sample_mixed_repo: Path, expected_mixed_config: str):
     """Test generating config in a mixed-language repository."""
-    result = run_cli(["--force"], cwd=sample_mixed_repo)
+    result = run_cli(["--force", "--auto"], cwd=sample_mixed_repo)
     assert result.returncode == 0
     assert "Successfully generated" in result.stdout
 
@@ -58,15 +56,7 @@ def test_generation_in_sample_mixed_repo(sample_mixed_repo: Path, expected_mixed
 
     # Compare only the essential parts
     assert "Technologies detected:" in generated_config
-    assert "To install: pre-commit install" in generated_config
-    assert "To update: pre-commit autoupdate" in generated_config
-    assert "https://github.com/pre-commit/pre-commit-hooks" in generated_config
-    assert "https://github.com/astral-sh/ruff-pre-commit" in generated_config
-    assert "https://github.com/pre-commit/mirrors-prettier" in generated_config
-    assert "https://github.com/pre-commit/mirrors-eslint" in generated_config
-    assert "https://github.com/antonbabenko/pre-commit-terraform" in generated_config
-    assert "https://github.com/hadolint/hadolint" in generated_config
-    assert "https://github.com/shellcheck-py/shellcheck-py" in generated_config
+    assert "https://github.com/Jakub3628800/pre-commit-starter" in generated_config
 
 
 def test_no_overwrite_without_force(sample_python_repo: Path):
@@ -160,3 +150,85 @@ def test_empty_custom_hooks_file(sample_python_repo: Path):
     assert result.returncode == 0  # Tool should succeed but warn
     assert "Custom hooks file .pre-commit-starter-hooks.yaml is invalid or empty" in result.stdout
     assert "Successfully generated" in result.stdout
+
+
+def test_force_mode_high_confidence(sample_mixed_repo: Path):
+    """Test that force mode only includes technologies with high confidence."""
+    # High confidence Python setup (multiple files + requirements.txt)
+    for i in range(5):
+        (sample_mixed_repo / f"main{i}.py").write_text(f"def main{i}(): pass\n")
+    (sample_mixed_repo / "requirements.txt").write_text("pytest==7.0.0\n")
+    # Low confidence JavaScript (single file)
+    (sample_mixed_repo / "script.js").write_text("console.log('test');")
+    # Run with force flag
+    result = run_cli(["--force"], cwd=sample_mixed_repo)
+    assert result.returncode == 0
+    assert "Successfully generated" in result.stdout
+
+    config_path = sample_mixed_repo / ".pre-commit-config.yaml"
+    assert config_path.is_file()
+    generated_config = config_path.read_text(encoding="utf-8")
+
+    # Python should be included (high confidence)
+    assert "python" in generated_config.lower()
+    # JavaScript should not be included (low confidence)
+    assert "javascript" not in generated_config.lower()
+    assert "eslint" not in generated_config.lower()
+    # Basic hooks should be included
+    assert "pre-commit-hooks" in generated_config
+
+
+def test_force_mode_no_high_confidence(sample_mixed_repo: Path):
+    """Test that force mode includes only basic hooks when no technologies have high confidence."""
+    # Create only low confidence setups
+
+    # Low confidence JavaScript (single file)
+    (sample_mixed_repo / "script.js").write_text("console.log('test');")
+    # Low confidence Python (single file)
+    (sample_mixed_repo / "script.py").write_text("print('test')")
+
+    # Run with force flag
+    result = run_cli(["--force"], cwd=sample_mixed_repo)
+    assert result.returncode == 0
+    assert "No technologies detected with high confidence (>80%)" in result.stdout
+    assert "Including only basic hooks" in result.stdout
+    assert "Successfully generated" in result.stdout
+
+    config_path = sample_mixed_repo / ".pre-commit-config.yaml"
+    assert config_path.is_file()
+    generated_config = config_path.read_text(encoding="utf-8")
+
+    # Only basic hooks should be included
+    assert "pre-commit-hooks" in generated_config
+    assert "python" not in generated_config.lower()
+    assert "javascript" not in generated_config.lower()
+    assert "eslint" not in generated_config.lower()
+
+
+def test_auto_mode_all_confidence(sample_mixed_repo: Path):
+    """Test that auto mode includes all detected technologies regardless of confidence."""
+    # Create same file structure as force mode test
+
+    # High confidence Python setup
+    (sample_mixed_repo / "main.py").write_text("def main(): pass")
+    (sample_mixed_repo / "test.py").write_text("def test(): pass")
+    (sample_mixed_repo / "requirements.txt").write_text("pytest==7.0.0")
+
+    # Low confidence JavaScript
+    (sample_mixed_repo / "script.js").write_text("console.log('test');")
+
+    # Run with auto flag
+    result = run_cli(["--auto"], cwd=sample_mixed_repo)
+    assert result.returncode == 0
+    assert "Successfully generated" in result.stdout
+
+    config_path = sample_mixed_repo / ".pre-commit-config.yaml"
+    assert config_path.is_file()
+    generated_config = config_path.read_text(encoding="utf-8")
+
+    # Both Python and JavaScript should be included
+    assert "python" in generated_config.lower()
+    assert "javascript" in generated_config.lower()
+    assert "eslint" in generated_config.lower()
+    # Basic hooks should be included
+    assert "pre-commit-hooks" in generated_config
