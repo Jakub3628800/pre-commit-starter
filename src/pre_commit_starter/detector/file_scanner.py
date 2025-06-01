@@ -371,7 +371,7 @@ class FileScanner:
 
         # Special case for GitHub Actions - having any workflow files indicates high confidence
         if tech == "github_actions" and count >= 1:
-            confidence = self.HIGH_CONFIDENCE
+            confidence = self.HIGH_CONFIDENCE + 0.1  # Ensure it exceeds the >0.8 threshold
 
         return confidence
 
