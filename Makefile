@@ -24,6 +24,7 @@ install: $(VENV)/bin/activate  ## Install package, dependencies, and pre-commit 
 # Testing
 test: install  ## Run tests with pytest using the venv python and project root in PYTHONPATH
 	PYTHONPATH=$(shell pwd)/src $(VENV)/bin/python -m pytest src/tests/
+	$(PRE_COMMIT) run --all-files
 
 coverage: install  ## Generate coverage report using the venv python and project root in PYTHONPATH
 	PYTHONPATH=$(shell pwd)/src $(VENV)/bin/python -m pytest src/tests/ --cov=src/pre_commit_starter --cov-report=term-missing --cov-report=html
