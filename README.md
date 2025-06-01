@@ -1,55 +1,38 @@
 # pre-commit-starter
 
-A starter CLI tool for pre-commit configurations.
+A CLI tool that automatically detects technologies in your repository and generates an appropriate `.pre-commit-config.yaml` file with relevant hooks.
 
-## Usage
+## Quick Start
 
-### With uv
+Run once in your repository with uv:
 
 ```bash
-# Run once without installing
-uvx --from git+https://github.com/Jakub3628800/pre-commit-starter pre-commit-starter [--force]
+uvx --from git+https://github.com/Jakub3628800/pre-commit-starter pre-commit-starter
 ```
 
-```bash
-# Install as a persistent tool
-uv tool install git+https://github.com/Jakub3628800/pre-commit-starter
-```
+This will scan your repository, detect technologies (Python, JavaScript, Go, Rust, etc.), and generate a `.pre-commit-config.yaml` file with appropriate hooks.
 
-### Standard Installation & Usage
+Then install and run pre-commit:
 
 ```bash
-# Install
-pip install pre-commit-starter
-```
-
-```bash
-# Run in your repository
-pre-commit-starter
-```
-
-```bash
-# Install pre-commit hooks
-pre-commit install
-pre-commit run --all-files
+uvx pre-commit install
+uvx pre-commit run --all-files
 ```
 
 ## Options
 
 - `--force`: Overwrite existing `.pre-commit-config.yaml`
-- `--path`: Specify repository path (default: current directory)
+- `--path PATH`: Specify repository path (default: current directory)
 
-## GitHub Action
+## Documentation
 
-Use `.github/workflows/pre-commit-starter-check.yml` for CI integration to enforce checks.
+For detailed installation methods, usage examples, and advanced configuration:
 
-## Contributing
+📖 **[Installation and Usage Guide](docs/installation.md)**
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+Other documentation:
+- [Architecture](docs/ARCHITECTURE.md)
+- [Troubleshooting](docs/troubleshooting.md)
 
 ## License
 
