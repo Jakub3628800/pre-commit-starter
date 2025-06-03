@@ -380,7 +380,7 @@ class HookRegistry:
 
     def get_hook_description(self, hook_id: str) -> str:
         """Get the description of a hook."""
-        return self._hooks.get(hook_id, {}).get("description", "")
+        return self.HOOK_DESCRIPTIONS.get(hook_id, "")
 
     def get_hook_ids_for_tech(self, tech: str) -> list[str]:
         """Get all hook IDs available for a technology.

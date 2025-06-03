@@ -413,3 +413,10 @@ def test_blank_line_between_repos():
             f"No blank line between - repo: entries at lines {idx1 + 1} and {idx2 + 1}.\n"
             "YAML output:\n" + "\n".join(lines)
         )
+
+
+def test_get_hook_description():
+    """Ensure descriptions are returned for known hooks."""
+    registry = HookRegistry()
+    assert registry.get_hook_description("ruff") == "Lint Python code using Ruff"
+    assert registry.get_hook_description("unknown") == ""
