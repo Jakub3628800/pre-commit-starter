@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 
-def get_latest_tag():
+def get_latest_tag() -> str | None:
     """Get the latest git tag."""
     try:
         return subprocess.check_output(
@@ -17,7 +17,7 @@ def get_latest_tag():
         return None
 
 
-def get_commits_since_tag(tag=None):
+def get_commits_since_tag(tag: str | None = None) -> list[str]:
     """Get all commits since the specified tag."""
     cmd = ["git", "log", "--pretty=format:%s|%h|%an|%ad", "--date=short"]
     if tag:
@@ -27,7 +27,7 @@ def get_commits_since_tag(tag=None):
     return output.strip().split("\n")
 
 
-def parse_commit(commit_line):
+def parse_commit(commit_line: str) -> dict | None:
     """Parse a commit line into its components."""
     try:
         message, hash_id, author, date = commit_line.split("|")
@@ -56,7 +56,7 @@ def parse_commit(commit_line):
         return None
 
 
-def group_commits(commits):
+def group_commits(commits: list[dict | None]) -> dict[str, list[dict]]:
     """Group commits by type."""
     groups = {
         "feat": [],
@@ -79,7 +79,7 @@ def group_commits(commits):
     return groups
 
 
-def generate_changelog(tag=None):
+def generate_changelog(tag: str | None = None) -> str:
     """Generate changelog content."""
     commits = get_commits_since_tag(tag)
     parsed_commits = [parse_commit(c) for c in commits if c]
@@ -114,7 +114,7 @@ def generate_changelog(tag=None):
     return "\n".join(content)
 
 
-def main():
+def main() -> None:
     """Main function."""
     changelog_path = Path("CHANGELOG.md")
     tag = get_latest_tag()

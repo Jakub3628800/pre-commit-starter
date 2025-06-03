@@ -18,7 +18,7 @@ from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 
-from .detector.file_scanner import FileScanner
+from .detector.file_scanner import FileScanner, TechInfo
 from .generator.hooks.hook_registry import HookRegistry
 from .generator.yaml_builder import YAMLBuilder
 
@@ -51,7 +51,7 @@ INTERACTIVE_HELP = """
 console = Console()
 
 
-def display_summary(detected_techs: dict):
+def display_summary(detected_techs: dict) -> None:
     """Display a summary of detected technologies and proposed hooks."""
     table = Table(title="Detected Technologies")
     table.add_column("Technology", style="cyan")
@@ -82,7 +82,7 @@ def display_summary(detected_techs: dict):
     console.print(table)
 
 
-def display_hooks_for_tech(tech: str, hook_registry: HookRegistry):
+def display_hooks_for_tech(tech: str, hook_registry: HookRegistry) -> None:
     """Display hooks available for a technology."""
     hook_ids = hook_registry.get_hook_ids_for_tech(tech)
 
@@ -103,7 +103,7 @@ def display_hooks_for_tech(tech: str, hook_registry: HookRegistry):
     console.print(table)
 
 
-def select_technologies(detected_techs: dict, hook_registry: HookRegistry) -> list:
+def select_technologies(detected_techs: dict, hook_registry: HookRegistry) -> list[TechInfo]:
     """Interactive mode: Allow user to select which technologies to include hooks for."""
     if not detected_techs:
         return []
@@ -151,14 +151,14 @@ def select_technologies(detected_techs: dict, hook_registry: HookRegistry) -> li
     return selected_techs
 
 
-def display_configuration(config: str):
+def display_configuration(config: str) -> None:
     """Display the generated configuration."""
     console.print("\n[bold]Generated Configuration:[/bold]")
     syntax = Syntax(config, "yaml", theme="monokai", line_numbers=True)
     console.print(syntax)
 
 
-def display_next_steps():
+def display_next_steps() -> None:
     """Display next steps for the user."""
     console.print("\n[bold]Next steps:[/bold]")
     steps = """
@@ -246,7 +246,7 @@ def load_custom_hooks(repo_path: Path) -> dict | None:
     return result
 
 
-def run_generation(args: argparse.Namespace):
+def run_generation(args: argparse.Namespace) -> None:
     """Main logic for scanning and generating the config."""
     try:
         repo_path = Path(args.path).resolve()
@@ -368,7 +368,7 @@ def run_generation(args: argparse.Namespace):
         console.print(f"[red]Error: {e!s}[/red]")
 
 
-def main():
+def main() -> None:
     """Main function for the pre-commit-starter CLI tool."""
     parser = argparse.ArgumentParser(
         description="Generate pre-commit configuration based on repository content."
