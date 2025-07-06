@@ -1,0 +1,11 @@
+# ===============================================================================
+# pre-commit-config.yaml created with https://github.com/Jakub3628800/pre-commit-template
+# ===============================================================================
+
+{%- if python_version %}
+default_language_version:
+  python: {{ python_version }}
+
+{%- endif %}
+repos:
+{{ content | indent(2, first=True) }}

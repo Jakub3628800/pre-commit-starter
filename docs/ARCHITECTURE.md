@@ -8,7 +8,8 @@ Pre-commit Starter is a Python-based CLI tool that automates the generation of p
 
 ```
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   File Scanner  │────▶│  Hook Registry  │────▶│  YAML Builder   │
+│   Discovery     │────▶│ Template        │────▶│ Configuration   │
+│   Engine        │     │ Renderer        │     │ Generator       │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
         ▲                       ▲                        ▲
         │                       │                        │
@@ -19,292 +20,261 @@ Pre-commit Starter is a Python-based CLI tool that automates the generation of p
                         └──────────────┘
 ```
 
-## Component Details
+## Project Structure
 
-### 1. File Scanner (`src/detector/file_scanner.py`)
+```
+pre_Commit_Starter/
+├── __init__.py
+├── __main__.py              # Entry point for python -m pre_Commit_Starter
+├── main.py                  # Interactive CLI interface
+├── config.py                # Configuration data models
+├── discover.py              # Technology detection engine
+├── render_template.py       # Template rendering and config generation
+└── hook_templates/          # Jinja2 templates for hooks
+    ├── __init__.py
+    ├── base.j2             # Base hooks (file types, security)
+    ├── python.j2           # Python hooks (ruff, mypy)
+    ├── js.j2               # JavaScript/TypeScript hooks
+    ├── go.j2               # Go hooks
+    ├── docker.j2           # Docker hooks
+    ├── github_actions.j2   # GitHub Actions hooks
+    └── meta.j2             # Meta hooks (hook ordering)
+```
+
+## Core Components
+
+### 1. Discovery Engine (`discover.py`)
 
 #### Purpose
-
 - Analyzes repository content
 - Detects technologies and frameworks
-- Counts file types
+- Builds configuration models
 
-#### Implementation
-
+#### Key Functions
 ```python
-class FileScanner:
-    def scan_repository(self, path: str) -> dict[str, int]:
-        """
-        Scan repository and return detected technologies.
+def discover_files(directory: Path) -> dict[str, int]:
+    """Scan directory and count files by type."""
 
-        Args:
-            path: Repository path
-
-        Returns:
-            Dict mapping technology names to file counts
-        """
-        # Implementation details
+def discover_config(directory: Path) -> PreCommitConfig:
+    """Main discovery function that returns complete configuration."""
 ```
 
-#### Key Features
+#### Detection Logic
+- **File Extension Analysis**: Maps extensions to technologies
+- **Configuration File Detection**: Finds `package.json`, `go.mod`, etc.
+- **Content Analysis**: Looks for import statements, function patterns
+- **Smart Detection**: Combines multiple signals for accuracy
 
-- Recursive directory traversal
-- File extension mapping
-- Content-based detection
-- Technology classification
-- Support for various programming languages (Python, JavaScript, TypeScript, Go, Rust, etc.)
+#### Supported Technologies
+- **Python**: Detects `.py` files, `pyproject.toml`, `uv.lock`
+- **JavaScript/TypeScript**: Detects `.js`/`.ts` files, `package.json`
+- **Go**: Detects `.go` files, `go.mod`
+- **Docker**: Detects `Dockerfile`, `docker-compose.yml`
+- **GitHub Actions**: Detects `.github/workflows/`
+- **File Types**: YAML, JSON, TOML, XML
 
-#### Technology Detection Patterns
-
-The scanner uses both file extensions and content patterns to identify technologies:
-
-- **Python**: `.py`, `.pyi`, `.pyx` files and patterns like `import` statements
-- **JavaScript**: `.js`, `.jsx` files and patterns like `const`, `let` declarations
-- **TypeScript**: `.ts`, `.tsx` files and patterns like `interface`, `type` declarations
-- **Go**: `.go` files, `go.mod`, `go.sum` and patterns like `package`, `import`, `func` declarations
-- **Rust**: `.rs` files, `Cargo.toml`, `Cargo.lock` and patterns like `fn`, `struct`, `impl`, `mod` declarations
-- **Other technologies**: HTML, CSS, YAML, Docker, etc.
-
-### 2. Hook Registry (`src/hooks/hook_registry.py`)
+### 2. Configuration Models (`config.py`)
 
 #### Purpose
+- Defines data structures for configuration
+- Validates configuration options
+- Provides type safety
 
-- Maintains hook definitions
-- Maps technologies to hooks
-- Manages dependencies
-
-#### Implementation
-
+#### Key Classes
 ```python
-class HookRegistry:
-    def get_hooks_for_tech(self, tech: str) -> list[dict]:
-        """
-        Get appropriate hooks for a technology.
-
-        Args:
-            tech: Technology name
-
-        Returns:
-            List of hook configurations
-        """
-        # Implementation details
+@dataclass
+class PreCommitConfig:
+    """Main configuration class with all options."""
+    python: bool = False
+    js: bool = False
+    go: bool = False
+    docker: bool = False
+    github_actions: bool = False
+    # ... other fields
 ```
 
-#### Key Features
+#### Features
+- **Pydantic Integration**: Data validation and serialization
+- **Default Values**: Smart defaults based on detection
+- **Type Hints**: Full type coverage for IDE support
 
-- Hook priority system
-- Version management
-- Dependency resolution
-- Configuration validation
-
-### 3. YAML Builder (`src/generator/yaml_builder.py`)
+### 3. Template Renderer (`render_template.py`)
 
 #### Purpose
+- Renders Jinja2 templates to generate hook configurations
+- Combines multiple hook templates into final config
+- Handles template logic and conditionals
 
-- Generates pre-commit configurations
-- Merges hook definitions
-- Ensures compatibility
-
-#### Implementation
-
+#### Key Classes
 ```python
-class YAMLBuilder:
-    def build_config(self) -> str:
-        """
-        Generate pre-commit configuration.
+class TemplateRenderer:
+    """Unified template rendering for hooks and configs."""
 
-        Returns:
-            YAML configuration string
-        """
-        # Implementation details
+    def generate_hooks(self, config: PreCommitConfig) -> str:
+        """Generate hook configuration from templates."""
+
+    def render_config(self, config: PreCommitConfig) -> str:
+        """Render complete pre-commit configuration."""
 ```
 
-#### Key Features
+#### Template System
+- **Jinja2 Templates**: Flexible template rendering
+- **Conditional Logic**: Templates adapt based on detected technologies
+- **Hook Composition**: Multiple templates combine into final config
 
-- Smart hook merging
-- Priority-based ordering
-- Dependency deduplication
-- Version compatibility
-
-### 4. CLI Interface (`src/main.py`)
+### 4. CLI Interface (`main.py`)
 
 #### Purpose
+- Provides interactive user experience
+- Displays detection results
+- Collects user preferences
 
-- User interaction
-- Command processing
-- Output formatting
-
-#### Implementation
-
-```python
-@click.command()
-@click.option('--path', default='.')
-@click.option('--force', is_flag=True)
-def main(path: str, force: bool):
-    """Main CLI entry point."""
-    # Implementation details
-```
-
-#### Key Features
-
-- Rich text output
-- Progress indication
-- Error handling
-- Configuration backup
+#### Features
+- **Rich UI**: Beautiful tables and panels using Rich library
+- **Interactive Prompts**: User-friendly configuration questions
+- **Smart Defaults**: Pre-filled with detected values
+- **Progress Feedback**: Visual indication of processing
 
 ## Data Flow
 
-1. **Repository Analysis**
+### 1. Repository Analysis
+```mermaid
+graph LR
+    A[CLI Start] --> B[Scan Directory]
+    B --> C[Count Files]
+    C --> D[Detect Technologies]
+    D --> E[Build Config Model]
+    E --> F[Display Results]
+```
 
-   ```mermaid
-   graph LR
-       A[CLI] --> B[File Scanner]
-       B --> C[Technology Detection]
-       C --> D[File Counting]
-       D --> E[Results]
-   ```
+### 2. User Interaction
+```mermaid
+graph LR
+    A[Show Technologies] --> B[Ask Preferences]
+    B --> C[Customize Options]
+    C --> D[Validate Config]
+    D --> E[Finalize Config]
+```
 
-2. **Hook Selection**
+### 3. Configuration Generation
+```mermaid
+graph LR
+    A[Load Templates] --> B[Render Hooks]
+    B --> C[Combine Templates]
+    C --> D[Generate YAML]
+    D --> E[Write Config File]
+```
 
-   ```mermaid
-   graph LR
-       A[Technologies] --> B[Hook Registry]
-       B --> C[Hook Selection]
-       C --> D[Dependency Resolution]
-       D --> E[Configuration]
-   ```
+## Hook Templates
 
-3. **Configuration Generation**
-   ```mermaid
-   graph LR
-       A[Hook Configs] --> B[YAML Builder]
-       B --> C[Merge Hooks]
-       C --> D[Order Hooks]
-       D --> E[Generate YAML]
-   ```
+### Template Structure
+Each technology has its own template file in `hook_templates/`:
 
-## Hook Categories
+```jinja2
+# Example: python.j2
+{% if config.python %}
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+{% if config.python and config.mypy_args %}
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [tomli>=2.0.0]
+{% endif %}
+{% endif %}
+```
 
-The system organizes hooks into priority-based categories:
+### Template Features
+- **Conditional Rendering**: Only includes hooks for detected technologies
+- **Flexible Configuration**: Adapts based on project specifics
+- **Version Management**: Keeps hook versions up to date
 
-1. Security (Priority 1)
-2. Basic Checks (Priority 2)
-3. Language-Specific (Priority 3-4)
-4. Framework-Specific (Priority 11)
-5. Performance (Priority 12)
-6. Accessibility (Priority 13)
-7. Testing (Priority 14)
-8. Dependencies (Priority 15)
+## Development Tools
 
-## Configuration Management
+### Makefile Targets
+```bash
+make install    # Install dependencies
+make run        # Run the tool
+make test       # Run tests
+make build      # Build package
+make clean      # Clean artifacts
+```
 
-### Hook Merging Strategy
+### Testing Strategy
+- **Unit Tests**: Test individual components
+- **Integration Tests**: Test complete workflows
+- **Fixture-based Testing**: Use sample projects for testing
+- **Property-based Testing**: Hypothesis for edge cases
 
-1. **Repository Level**
+### Code Quality
+- **Ruff**: Linting and formatting (replaces flake8)
+- **MyPy**: Type checking
+- **Pre-commit**: Self-dogfooding with generated configs
 
-   ```python
-   def merge_repos(self, existing: dict, new: dict) -> dict:
-       """Merge repository configurations."""
-       # Check for existing repo
-       # Merge hooks
-       # Update versions
-   ```
+## Design Principles
 
-2. **Hook Level**
-   ```python
-   def merge_hooks(self, existing: dict, new: dict) -> dict:
-       """Merge hook configurations."""
-       # Check hook compatibility
-       # Merge arguments
-       # Resolve dependencies
-   ```
+### 1. Simplicity
+- Minimal user interaction required
+- Smart defaults based on detection
+- Clear, focused functionality
 
-### Version Management
+### 2. Extensibility
+- Template-based hook system
+- Easy to add new technologies
+- Modular architecture
 
-1. **Version Selection**
+### 3. Reliability
+- Comprehensive testing
+- Type safety throughout
+- Graceful error handling
 
-   - Use latest stable versions
-   - Check compatibility matrix
-   - Handle peer dependencies
-
-2. **Update Strategy**
-   - Keep existing versions if working
-   - Update only if necessary
-   - Maintain compatibility
+### 4. User Experience
+- Rich, interactive interface
+- Clear feedback and progress
+- Helpful error messages
 
 ## Performance Considerations
 
-1. **Scanning Optimization**
+### File Scanning
+- Efficient directory traversal
+- Skips irrelevant directories (`.git`, `node_modules`)
+- Caches detection results
 
-   - Skip unnecessary directories
-   - Use efficient file operations
-   - Cache technology detection
-
-2. **Hook Execution**
-   - Order hooks for efficiency
-   - Minimize redundant checks
-   - Enable parallel execution
-
-## Error Handling
-
-1. **Graceful Degradation**
-
-   - Continue on non-critical errors
-   - Provide helpful error messages
-   - Maintain existing configuration
-
-2. **Recovery Strategies**
-   - Backup existing config
-   - Rollback on failure
-   - Log error details
-
-## Future Enhancements
-
-1. **Technical Improvements**
-
-   - Async file scanning
-   - Plugin system
-   - Configuration profiles
-
-2. **Feature Additions**
-
-   - Custom hook definitions
-   - CI/CD integration
-   - Performance metrics
-
-3. **User Experience**
-   - Interactive configuration
-   - Visual hook editor
-   - Configuration validation
+### Template Rendering
+- Lazy template loading
+- Efficient Jinja2 rendering
+- Minimal memory usage
 
 ## Security Considerations
 
-1. **Code Safety**
+### Template Safety
+- Jinja2 sandboxing
+- No arbitrary code execution
+- Validated template inputs
 
-   - Validate hook sources
-   - Check script contents
-   - Verify dependencies
+### Configuration Safety
+- YAML syntax validation
+- Hook source verification
+- Secure defaults
 
-2. **Configuration Safety**
-   - Validate YAML syntax
-   - Check hook permissions
-   - Secure sensitive data
+## Future Enhancements
 
-## Testing Strategy
+### Technical Improvements
+- Async file scanning for large repositories
+- Plugin system for custom hooks
+- Configuration profiles and presets
 
-1. **Unit Tests**
+### User Experience
+- Web-based configuration interface
+- Hook performance analytics
+- Integration with popular IDEs
 
-   - Component isolation
-   - Mock external systems
-   - Edge case coverage
-
-2. **Integration Tests**
-
-   - Component interaction
-   - Configuration generation
-   - Hook execution
-
-3. **Fixtures**
-   - Sample repositories
-   - Expected configurations
-   - Test scenarios
+### Additional Technologies
+- Support for more languages (Ruby, PHP, etc.)
+- Framework-specific hooks (Django, React, etc.)
+- Cloud-specific configurations (AWS, GCP, etc.)

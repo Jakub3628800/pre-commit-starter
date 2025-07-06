@@ -1,0 +1,31 @@
+# =====================
+# Go hooks
+# =====================
+
+- repo: https://github.com/golangci/golangci-lint
+  rev: v1.61.0
+  hooks:
+  - id: golangci-lint
+    name: Run golangci-lint
+
+- repo: https://github.com/pre-commit/mirrors-gofmt
+  rev: v1.23.0
+  hooks:
+  - id: gofmt
+    name: Format Go code with gofmt
+
+- repo: https://github.com/dnephin/pre-commit-golang
+  rev: v0.5.1
+  hooks:
+  - id: go-imports
+    name: Format Go imports with goimports
+  - id: go-vet-mod
+    name: Run go vet with modules
+
+{%- if go_critic %}
+- repo: https://github.com/go-critic/go-critic
+  rev: v0.11.4
+  hooks:
+  - id: go-critic
+    name: Run go-critic static analyzer
+{%- endif %}
