@@ -11,7 +11,7 @@ pre-commit-starter is a CLI tool that automatically detects technologies in your
 The easiest way to use pre-commit-starter is as a one-time tool with uv:
 
 ```bash
-uvx --from git+https://github.com/Jakub3628800/pre-commit-starter pre-commit-starter [--force]
+uvx --from git+https://github.com/Jakub3628800/pre-commit-starter pre-commit-starter
 ```
 
 This will:
@@ -31,30 +31,25 @@ uv tool install git+https://github.com/Jakub3628800/pre-commit-starter
 Then run it in any repository:
 
 ```bash
-pre-commit-starter [options]
+pre-commit-starter
 ```
 
-### Method 3: Traditional pip Installation
-
-```bash
-pip install pre-commit-starter
-```
-
-Then run it:
-
-```bash
-pre-commit-starter [options]
-```
-
-### Method 4: Development Installation
+### Method 3: Development Installation
 
 For contributing or development:
 
 ```bash
 git clone https://github.com/Jakub3628800/pre-commit-starter
 cd pre-commit-starter
-uv sync
-uv run pre-commit-starter [options]
+make install
+```
+
+Then run it:
+
+```bash
+make run
+# or
+python -m pre_commit_starter
 ```
 
 ## Usage
@@ -69,30 +64,37 @@ pre-commit-starter
 
 This will:
 1. Scan your repository for technologies
-2. Generate a `.pre-commit-config.yaml` file with appropriate hooks
-3. Display a summary of detected technologies and configured hooks
+2. Display detected technologies in a table
+3. Ask for your preferences through an interactive interface
+4. Generate a `.pre-commit-config.yaml` file with appropriate hooks
 
-### Command Line Options
+### Interactive Configuration
 
-- `--force`: Overwrite existing `.pre-commit-config.yaml` file
-- `--path PATH`: Specify repository path (default: current directory)
-- `--verbose`: Enable verbose output
-- `--help`: Show help message
+The tool provides an interactive interface that:
+- Shows detected technologies
+- Asks for confirmation on each technology
+- Allows customization of specific hooks
+- Uses smart defaults based on your project
 
-### Examples
+### Development Commands
+
+If you're working on the tool itself:
 
 ```bash
-# Generate config in current directory
-pre-commit-starter
+# Install development dependencies
+make install
 
-# Force overwrite existing config
-pre-commit-starter --force
+# Run the tool
+make run
 
-# Generate config for specific path
-pre-commit-starter --path /path/to/repo
+# Run tests
+make test
 
-# Verbose output
-pre-commit-starter --verbose
+# Build package
+make build
+
+# Clean up build artifacts
+make clean
 ```
 
 ## After Generation
@@ -127,31 +129,44 @@ Once the `.pre-commit-config.yaml` file is generated:
 
 The tool automatically detects technologies based on:
 
-- **File extensions**: `.py`, `.js`, `.ts`, `.go`, `.rs`, etc.
-- **Configuration files**: `package.json`, `Cargo.toml`, `go.mod`, etc.
+- **File extensions**: `.py`, `.js`, `.ts`, `.go`, etc.
+- **Configuration files**: `package.json`, `go.mod`, `pyproject.toml`, etc.
 - **File content**: Import statements, function definitions, etc.
 
 ### Supported Technologies
 
-- **Python**: `.py` files, `requirements.txt`, `pyproject.toml`
-- **JavaScript/TypeScript**: `.js`, `.ts`, `.jsx`, `.tsx`, `package.json`
-- **React**: JSX files, React imports
-- **Vue**: `.vue` files
-- **Svelte**: `.svelte` files
-- **Go**: `.go` files, `go.mod`
-- **Rust**: `.rs` files, `Cargo.toml`
-- **HTML**: `.html`, `.htm` files
-- **CSS**: `.css`, `.scss`, `.sass`, `.less` files
-- **And more...**
+- **Python**:
+  - Files: `.py`, `.pyi`, `.pyx`
+  - Config: `pyproject.toml`, `requirements.txt`, `setup.py`
+  - Tools: Ruff (linting/formatting), MyPy (type checking)
+  - Features: uv.lock support, custom MyPy args
 
-## Configuration Profiles
+- **JavaScript/TypeScript**:
+  - Files: `.js`, `.ts`, `.jsx`, `.tsx`
+  - Config: `package.json`, `tsconfig.json`
+  - Tools: Prettier (formatting), ESLint (linting)
+  - Features: TypeScript support, JSX/React detection
 
-The tool includes several built-in profiles:
+- **Go**:
+  - Files: `.go`
+  - Config: `go.mod`, `go.sum`
+  - Tools: golangci-lint, gofmt, goimports
+  - Features: Optional go-critic support
 
-- **minimal**: Basic hooks for detected technologies
-- **standard**: Comprehensive hooks with good defaults
-- **strict**: Strict linting and formatting rules
-- **security**: Security-focused hooks
+- **Docker**:
+  - Files: `Dockerfile`, `docker-compose.yml`
+  - Tools: hadolint (Dockerfile linting)
+  - Features: Large file detection, .dockerignore validation
+
+- **GitHub Actions**:
+  - Files: `.github/workflows/*.yml`
+  - Tools: actionlint (workflow validation)
+  - Features: Security scanning options
+
+- **File Types**:
+  - YAML, JSON, TOML, XML syntax checking
+  - Trailing whitespace removal
+  - End-of-file fixing
 
 ## CI/CD Integration
 
@@ -209,16 +224,10 @@ You can customize the generated configuration by:
 
 ### Integration with Existing Workflows
 
-If you already have a `.pre-commit-config.yaml` file:
-
-- Use `--force` to overwrite it completely
-- Or manually merge the generated hooks with your existing configuration
-
-## Performance Tips
-
-- The tool caches detection results for faster subsequent runs
-- Use `--path` to limit scanning to specific directories
-- Large repositories may take longer to scan initially
+If you already have a `.pre-commit-config.yaml` file, the tool will:
+- Detect the existing configuration
+- Ask if you want to overwrite it
+- Provide guidance on merging configurations
 
 ## Getting Help
 

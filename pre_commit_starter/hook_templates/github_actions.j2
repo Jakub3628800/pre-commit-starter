@@ -1,0 +1,23 @@
+# =====================
+# GitHub Actions hooks
+# =====================
+
+{%- if workflow_validation %}
+- repo: https://github.com/rhysd/actionlint
+  rev: v1.6.27
+  hooks:
+  - id: actionlint
+    name: Lint GitHub Actions workflows
+    description: Lint GitHub Actions workflow files
+    files: '^\.github/workflows/.*\.(yml|yaml)$'
+{%- endif %}
+{%- if security_scanning %}
+- repo: https://github.com/Yelp/detect-secrets
+  rev: v1.5.0
+  hooks:
+  - id: detect-secrets
+    name: Detect secrets in GitHub Actions
+    description: Detect secrets in GitHub Actions workflows
+    files: '^\.github/workflows/.*\.(yml|yaml)$'
+    args: ['--baseline', '.secrets.baseline']
+{%- endif %}

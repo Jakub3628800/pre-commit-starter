@@ -1,0 +1,37 @@
+# =====================
+# Python hooks
+# =====================
+
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.11.6
+  hooks:
+  - id: ruff-format
+    name: Format Python code with Ruff
+  - id: ruff
+    name: Run Ruff linter and formatter
+    args: [--fix]
+
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.11.2
+  hooks:
+  - id: mypy
+    name: Run MyPy type checker
+    {%- if mypy_args %}
+    args: {{ mypy_args | tojson }}
+    {%- else %}
+    args: []
+    {%- endif %}
+    {%- if additional_dependencies %}
+    additional_dependencies:
+    {%- for dep in additional_dependencies %}
+      - {{ dep }}
+    {%- endfor %}
+    {%- endif %}
+
+{%- if uv_lock %}
+- repo: https://github.com/astral-sh/uv-pre-commit
+  rev: 0.5.11
+  hooks:
+  - id: uv-lock
+    name: Check uv.lock is up-to-date
+{%- endif %}

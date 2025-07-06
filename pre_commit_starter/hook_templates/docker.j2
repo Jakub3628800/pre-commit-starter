@@ -1,0 +1,25 @@
+# =====================
+# Docker hooks
+# =====================
+
+{%- if dockerfile_linting %}
+- repo: https://github.com/hadolint/hadolint
+  rev: v2.12.0
+  hooks:
+  - id: hadolint-docker
+    name: Lint Dockerfiles with hadolint
+    files: ^Dockerfile.*$
+    types: [dockerfile]
+{%- endif %}
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v5.0.0
+  hooks:
+  - id: check-added-large-files
+    name: Check for large files (Docker builds)
+    args: ['--maxkb=1000']
+  {%- if dockerignore_check %}
+  - id: check-case-conflict
+    name: Check for case conflicts (Docker compatibility)
+    files: '^(?!.*\.git).*$'
+  {%- endif %}

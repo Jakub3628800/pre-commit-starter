@@ -14,8 +14,6 @@
 
 1. Try updating pre-commit first:
    ```bash
-   make update
-   # or
    pre-commit autoupdate
    ```
 2. Check if the hook requires system dependencies
@@ -33,7 +31,7 @@
    ```
 2. Consider skipping heavy hooks with `SKIP`:
    ```bash
-   SKIP=pylint pre-commit run
+   SKIP=mypy pre-commit run
    ```
 
 ### 3. Technology Detection Issues
@@ -43,103 +41,215 @@
 **Solution:**
 
 1. Check if your files are in standard locations
-2. Run with verbose output:
+2. Run the tool directly to see detection results:
    ```bash
-   python -m src.main --path . --verbose
+   python -m pre_commit_starter
    ```
 3. Check supported technology patterns in documentation
 
-### 4. Configuration Conflicts
+### 4. Configuration Generation Issues
 
-#### Problem: Conflicting hook configurations
+#### Problem: Tool fails to generate configuration
 
 **Solution:**
 
-1. Check for duplicate hook entries
-2. Remove existing `.pre-commit-config.yaml`
-3. Regenerate with:
+1. Ensure you're running from the root of your repository
+2. Check file permissions in your project directory
+3. Try running with development installation:
    ```bash
-   make generate
+   git clone https://github.com/Jakub3628800/pre-commit-starter
+   cd pre-commit-starter
+   make install
+   make run
    ```
 
 ### 5. Common Error Messages
 
-#### `ValueError: Repo unknown`
+#### `ModuleNotFoundError: No module named 'pre_commit_starter'`
 
-- Ensure hook repository URLs are correct
-- Try running `pre-commit autoupdate`
-
-#### `ModuleNotFoundError`
-
-- Install development dependencies:
+- Install the package properly:
   ```bash
   make install
   ```
+- Or use uv for one-time execution:
+  ```bash
+  uvx --from git+https://github.com/Jakub3628800/pre-commit-starter pre-commit-starter
+  ```
 
-#### `Permission denied`
+#### `Permission denied` errors
 
-- Check file permissions
-- Run with appropriate permissions
+- Check file permissions in your project directory
+- Ensure you have write access to create `.pre-commit-config.yaml`
 
-#### `error: look-behind requires fixed-width pattern`
+#### `YAML syntax error` in generated config
 
-- This is a regex error that can occur in Python regex patterns
-- The issue has been fixed in recent versions by replacing look-behind assertions with simpler patterns
-- If you encounter this, update to the latest version or simplify your regex patterns
+- This shouldn't happen with template-based generation
+- If it does, please report it as a bug
+- As a workaround, manually fix the YAML syntax
 
-### 6. Best Practices
+### 6. Development Issues
 
-1. Always run `make update` after pulling changes
-2. Use `make lint` before committing
-3. Check hook documentation for specific requirements
-4. Keep hooks up to date with `pre-commit autoupdate`
+#### Problem: Tests failing after changes
 
-### 7. Getting Help
+**Solution:**
+
+1. Clean and reinstall dependencies:
+   ```bash
+   make clean
+   make install
+   ```
+
+2. Run tests to identify issues:
+   ```bash
+   make test
+   ```
+
+3. Check if new dependencies are needed in `pyproject.toml`
+
+#### Problem: Import errors in development
+
+**Solution:**
+
+1. Ensure you're in the project root directory
+2. Check that the virtual environment is activated:
+   ```bash
+   source .venv/bin/activate
+   ```
+3. Reinstall in development mode:
+   ```bash
+   make install
+   ```
+
+### 7. Pre-commit Hook Issues
+
+#### Problem: Hooks not running on commit
+
+**Solution:**
+
+1. Ensure pre-commit is installed:
+   ```bash
+   pre-commit install
+   ```
+
+2. Check that `.pre-commit-config.yaml` exists and is valid:
+   ```bash
+   pre-commit validate-config
+   ```
+
+3. Test hooks manually:
+   ```bash
+   pre-commit run --all-files
+   ```
+
+#### Problem: Specific hooks failing
+
+**Solution:**
+
+1. Check hook-specific requirements (e.g., Node.js for ESLint)
+2. Update hook versions:
+   ```bash
+   pre-commit autoupdate
+   ```
+3. Check hook documentation for system requirements
+
+### 8. Tool-Specific Issues
+
+#### Ruff Issues
+- Ensure you have the latest version of ruff
+- Check `pyproject.toml` for conflicting configurations
+- Ruff replaces flake8 in this project
+
+#### MyPy Issues
+- Ensure all dependencies are installed
+- Check for missing type stubs
+- MyPy configuration is in `pyproject.toml`
+
+#### ESLint/Prettier Issues
+- Ensure Node.js is installed
+- Check for conflicting configuration files
+- Consider using `npm install` in your project
+
+### 9. Best Practices
+
+1. Always run from the project root directory
+2. Use `make install` for development setup
+3. Keep hooks up to date with `pre-commit autoupdate`
+4. Test configuration before committing with `pre-commit run --all-files`
+
+### 10. Getting Help
 
 If you encounter issues not addressed in this guide:
 
-1. Check the [GitHub Issues](https://github.com/yourusername/pre-commit-starter/issues)
-2. Run with `--verbose` flag for detailed output
-3. Include error messages and debug logs when reporting issues
+1. Check the [GitHub Issues](https://github.com/Jakub3628800/pre-commit-starter/issues)
+2. Include the following information when reporting issues:
+   - Operating system and version
+   - Python version
+   - Error messages (full traceback)
+   - Steps to reproduce
+   - Project structure (if relevant)
 
 ## Quick Reference
 
-### Common Commands
+### Essential Commands
 
 ```bash
-# Install dependencies and hooks
-make install
+# Development setup
+make install          # Install dependencies
+make run             # Run the tool
+make test            # Run tests
+make build           # Build package
+make clean           # Clean artifacts
 
-# Generate new configuration
-make generate
-
-# Update hooks
-make update
-
-# Run specific hooks
-pre-commit run hook-id
-
-# Skip specific hooks
-SKIP=hook-id git commit -m "message"
+# Pre-commit commands
+pre-commit install                 # Install hooks
+pre-commit run --all-files        # Run all hooks
+pre-commit autoupdate             # Update hook versions
+SKIP=hook-id git commit -m "msg"  # Skip specific hook
 ```
 
 ### Debug Commands
 
 ```bash
-# Run with verbose output
-python -m src.main --verbose
+# Check tool installation
+python -m pre_commit_starter --help
+
+# Validate pre-commit config
+pre-commit validate-config
+
+# Run specific hook
+pre-commit run hook-id
 
 # Check hook versions
 pre-commit autoupdate --dry-run
-
-# Clean and reinstall
-make clean && make install
 ```
 
-### Reporting Issues
+### File Structure Check
 
-If you encounter a problem that isn't covered here, please report it:
+Your project should have:
+- `.pre-commit-config.yaml` (generated by the tool)
+- `.git/` directory (must be a git repository)
+- Source files in standard locations (e.g., `src/`, root directory)
 
-1. Check the [GitHub Issues](https://github.com/yourusername/pre-commit-starter/issues) for similar problems.
-2. If your issue is new, [create a new issue](https://github.com/yourusername/pre-commit-starter/issues/new).
-3. Provide the following information:
+## Reporting Issues
+
+When reporting issues, please include:
+
+1. **System Information**:
+   - OS and version
+   - Python version
+   - Tool version or commit hash
+
+2. **Error Details**:
+   - Full error message
+   - Command that caused the error
+   - Expected vs actual behavior
+
+3. **Project Context**:
+   - Repository structure
+   - Technology stack
+   - Any relevant configuration files
+
+4. **Steps to Reproduce**:
+   - Minimal example if possible
+   - Exact commands used
+   - Any relevant files or configurations

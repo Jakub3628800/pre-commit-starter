@@ -1,0 +1,49 @@
+# =====================
+# JavaScript/TypeScript hooks
+# =====================
+
+- repo: https://github.com/pre-commit/mirrors-prettier
+  rev: v3.0.3
+  hooks:
+  - id: prettier
+    name: Format JavaScript/TypeScript code with Prettier
+    {%- if typescript and jsx %}
+    types_or: [javascript, jsx, ts, tsx]
+    {%- elif typescript %}
+    types_or: [javascript, ts]
+    {%- elif jsx %}
+    types_or: [javascript, jsx]
+    {%- else %}
+    types: [javascript]
+    {%- endif %}
+    {%- if prettier_config %}
+    args: [--config={{ prettier_config }}]
+    {%- endif %}
+
+- repo: https://github.com/pre-commit/mirrors-eslint
+  rev: v9.17.0
+  hooks:
+  - id: eslint
+    name: Run ESLint for JavaScript/TypeScript
+    {%- if typescript and jsx %}
+    types_or: [javascript, jsx, ts, tsx]
+    {%- elif typescript %}
+    types_or: [javascript, ts]
+    {%- elif jsx %}
+    types_or: [javascript, jsx]
+    {%- else %}
+    types: [javascript]
+    {%- endif %}
+    {%- if eslint_config %}
+    args: [--config={{ eslint_config }}]
+    {%- endif %}
+    additional_dependencies:
+    {%- if typescript %}
+    - '@typescript-eslint/eslint-plugin'
+    - '@typescript-eslint/parser'
+    {%- endif %}
+    {%- if jsx %}
+    - eslint-plugin-react
+    - eslint-plugin-react-hooks
+    {%- endif %}
+    - eslint
