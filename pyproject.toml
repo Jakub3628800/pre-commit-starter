@@ -52,6 +52,7 @@ pre-commit-starter = "pre_commit_starter.main:main"
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
+"pre_commit_starter" = ["hook_templates/*.j2"]
 
 [tool.pytest.ini_options]
 markers = [
