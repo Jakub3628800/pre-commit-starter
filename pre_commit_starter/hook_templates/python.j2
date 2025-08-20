@@ -3,7 +3,7 @@
 # =====================
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.11.6
+  rev: v0.12.2
   hooks:
   - id: ruff-format
     name: Format Python code with Ruff
@@ -12,7 +12,7 @@
     args: [--fix]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: v1.11.2
+  rev: v1.16.1
   hooks:
   - id: mypy
     name: Run MyPy type checker
@@ -30,7 +30,7 @@
 
 {%- if uv_lock %}
 - repo: https://github.com/astral-sh/uv-pre-commit
-  rev: 0.5.11
+  rev: 0.7.19
   hooks:
   - id: uv-lock
     name: Check uv.lock is up-to-date

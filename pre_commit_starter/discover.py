@@ -452,6 +452,119 @@ def detect_python_version(path: Path) -> Optional[str]:
     return None
 
 
+def _get_used_imports(path: Path) -> set[str]:
+    """Get imports actually used in the project code."""
+    import ast
+    import os
+
+    used_imports = set()
+
+    # Find all Python files in the project
+    for root, _, files in os.walk(path):
+        for file in files:
+            if file.endswith(".py"):
+                file_path = os.path.join(root, file)
+                # Skip virtual environments and cache directories
+                if any(part in file_path for part in [".venv", "__pycache__", ".git"]):
+                    continue
+
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        tree = ast.parse(f.read())
+
+                    for node in ast.walk(tree):
+                        if isinstance(node, ast.Import):
+                            for alias in node.names:
+                                import_name = alias.name.split(".")[0]
+                                # Skip standard library and local modules
+                                if not _is_standard_library(
+                                    import_name
+                                ) and not _is_local_module(import_name, path):
+                                    # Map yaml to PyYAML
+                                    if import_name == "yaml":
+                                        used_imports.add("PyYAML")
+                                    else:
+                                        used_imports.add(import_name)
+                        elif isinstance(node, ast.ImportFrom):
+                            if node.module:
+                                import_name = node.module.split(".")[0]
+                                # Skip standard library and local modules
+                                if not _is_standard_library(
+                                    import_name
+                                ) and not _is_local_module(import_name, path):
+                                    # Map yaml to PyYAML
+                                    if import_name == "yaml":
+                                        used_imports.add("PyYAML")
+                                    else:
+                                        used_imports.add(import_name)
+                except Exception:
+                    # Skip files that can't be parsed
+                    continue
+
+    return used_imports
+
+
+def _is_standard_library(module_name: str) -> bool:
+    """Check if a module is part of the Python standard library."""
+    # Common standard library modules
+    stdlib_modules = {
+        "argparse",
+        "ast",
+        "collections",
+        "csv",
+        "datetime",
+        "email",
+        "fnmatch",
+        "functools",
+        "glob",
+        "hashlib",
+        "io",
+        "json",
+        "logging",
+        "math",
+        "os",
+        "pathlib",
+        "random",
+        "re",
+        "shutil",
+        "socket",
+        "sqlite3",
+        "ssl",
+        "stat",
+        "string",
+        "subprocess",
+        "sys",
+        "tempfile",
+        "threading",
+        "time",
+        "tkinter",
+        "tomllib",
+        "types",
+        "typing",
+        "unittest",
+        "urllib",
+        "uuid",
+        "xml",
+        "zipfile",
+    }
+
+    return module_name in stdlib_modules
+
+
+def _is_local_module(module_name: str, project_path: Path) -> bool:
+    """Check if a module is a local project module."""
+    # Local modules in this project
+    local_modules = {
+        "config",
+        "discover",
+        "main",
+        "render_template",
+        "pre_commit_starter",
+    }
+
+    return module_name in local_modules
+
+
 def find_config_files(path: Path, files: set[str]) -> dict:
     """Find configuration files for various tools."""
     config_files = {}
@@ -513,12 +626,17 @@ def discover_config(path: Path) -> PreCommitConfig:
     config_files = find_config_files(path, files)
 
     # Detect additional dependencies for MyPy if Python is detected
-    # Only include runtime dependencies, not dev dependencies or type stubs
+    # Include only dependencies that are actually imported in the code
     additional_deps = None
     if has_python:
-        runtime_deps = detect_runtime_dependencies(path)
-        if runtime_deps:
-            additional_deps = sorted(list(runtime_deps))
+        # Get actual imports used in the project
+        used_imports = _get_used_imports(path)
+        if used_imports:
+            # Get type stubs for used imports
+            type_stubs = get_required_type_stubs(used_imports)
+            # Combine used imports and type stubs
+            combined_deps = sorted(list(used_imports | type_stubs))
+            additional_deps = combined_deps
 
     # Build configuration
     config = PreCommitConfig(
