@@ -32,14 +32,13 @@ def detect_dependencies(path: Path, *, include_dev: bool) -> set[str]:
 
     # 1. Parse pyproject.toml
     if pyproject_file.is_file():
-        tomllib = None
         try:
             import tomllib
         except ImportError:
             try:
                 import tomli as tomllib
             except ImportError:
-                pass  # No TOML parser available
+                tomllib = None
 
         if tomllib:
             try:
@@ -239,14 +238,13 @@ def detect_python_version(path: Path) -> Optional[str]:
     # Check pyproject.toml
     pyproject_file = path / "pyproject.toml"
     if pyproject_file.exists():
-        tomllib = None
         try:
             import tomllib
         except ImportError:
             try:
                 import tomli as tomllib
             except ImportError:
-                pass  # No TOML parser available
+                tomllib = None
 
         if tomllib:
             try:
@@ -324,9 +322,8 @@ def _get_used_imports(path: Path) -> set[str]:
                     import_name = node.module.split(".")[0]
 
             if import_name:
-                if (
-                    import_name not in local_modules
-                    and not _is_standard_library(import_name)
+                if import_name not in local_modules and not _is_standard_library(
+                    import_name
                 ):
                     package_name = constants.IMPORT_TO_PACKAGE_MAP.get(
                         import_name, import_name
