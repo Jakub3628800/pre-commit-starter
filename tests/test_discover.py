@@ -8,15 +8,15 @@ from pathlib import Path
 # Add root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from pre_commit_starter import constants
 from pre_commit_starter.discover import (
-    MYPY_PACKAGE_TO_STUB_MAP,
     detect_docker,
     detect_github_actions,
     detect_go,
+    detect_dependencies,
     detect_javascript,
     detect_json_files,
     detect_jsx,
-    detect_project_dependencies,
     detect_python,
     detect_toml_files,
     detect_typescript,
@@ -300,7 +300,7 @@ def test_discover_config_empty_directory():
         assert not config.toml_check
 
 
-def test_detect_project_dependencies_pyproject_toml():
+def test_detect_dependencies_pyproject_toml():
     """Test dependency detection from pyproject.toml."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
@@ -323,7 +323,7 @@ dev = [
 ]
 """)
 
-        dependencies = detect_project_dependencies(tmp_path)
+        dependencies = detect_dependencies(tmp_path, include_dev=True)
         expected = {
             "PyYAML",
             "requests",
@@ -335,7 +335,7 @@ dev = [
         assert dependencies == expected
 
 
-def test_detect_project_dependencies_requirements_txt():
+def test_detect_dependencies_requirements_txt():
     """Test dependency detection from requirements.txt files."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
@@ -355,7 +355,7 @@ mypy>=1.0
 types-PyYAML
 """)
 
-        dependencies = detect_project_dependencies(tmp_path)
+        dependencies = detect_dependencies(tmp_path, include_dev=True)
         expected = {
             "PyYAML",
             "requests",
@@ -367,12 +367,12 @@ types-PyYAML
         assert dependencies == expected
 
 
-def test_detect_project_dependencies_no_files():
+def test_detect_dependencies_no_files():
     """Test dependency detection with no dependency files."""
     with tempfile.TemporaryDirectory() as tmp_dir:
         tmp_path = Path(tmp_dir)
 
-        dependencies = detect_project_dependencies(tmp_path)
+        dependencies = detect_dependencies(tmp_path, include_dev=True)
         assert dependencies == set()
 
 
@@ -408,17 +408,17 @@ def test_get_required_type_stubs():
 def test_mypy_package_to_stub_map():
     """Test that the MyPy package to stub mapping is valid."""
     # Ensure the mapping exists and has expected entries
-    assert isinstance(MYPY_PACKAGE_TO_STUB_MAP, dict)
-    assert len(MYPY_PACKAGE_TO_STUB_MAP) > 0
+    assert isinstance(constants.MYPY_PACKAGE_TO_STUB_MAP, dict)
+    assert len(constants.MYPY_PACKAGE_TO_STUB_MAP) > 0
 
     # Test some expected mappings
-    assert MYPY_PACKAGE_TO_STUB_MAP["PyYAML"] == "types-PyYAML"
-    assert MYPY_PACKAGE_TO_STUB_MAP["yaml"] == "types-PyYAML"
-    assert MYPY_PACKAGE_TO_STUB_MAP["requests"] == "types-requests"
-    assert MYPY_PACKAGE_TO_STUB_MAP["setuptools"] == "types-setuptools"
+    assert constants.MYPY_PACKAGE_TO_STUB_MAP["PyYAML"] == "types-PyYAML"
+    assert constants.MYPY_PACKAGE_TO_STUB_MAP["yaml"] == "types-PyYAML"
+    assert constants.MYPY_PACKAGE_TO_STUB_MAP["requests"] == "types-requests"
+    assert constants.MYPY_PACKAGE_TO_STUB_MAP["setuptools"] == "types-setuptools"
 
     # All values should be valid type stub package names
-    for stub_package in MYPY_PACKAGE_TO_STUB_MAP.values():
+    for stub_package in constants.MYPY_PACKAGE_TO_STUB_MAP.values():
         assert stub_package.startswith("types-") or stub_package.startswith("@types/")
 
 

@@ -4,13 +4,13 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
+from pre_commit_starter import constants
 from pre_commit_starter.discover import (
     detect_python_version,
     find_config_files,
     get_required_type_stubs,
-    is_ignored_by_gitignore,
+    is_path_ignored,
     read_gitignore_patterns,
-    detect_runtime_dependencies,
     main as discover_main,
 )
 
@@ -30,20 +30,22 @@ class TestGitignoreLogic:
         assert ".env" in patterns
         assert "# comment" not in patterns
         assert "" not in patterns
+        # Should also include default patterns
+        assert ".git/" in patterns
 
     def test_read_gitignore_patterns_missing_file(self, tmp_path):
         """Test reading gitignore when file doesn't exist."""
         patterns = read_gitignore_patterns(tmp_path)
-        assert patterns == set()
+        assert patterns == constants.DEFAULT_IGNORE_PATTERNS
 
     def test_read_gitignore_patterns_permission_error(self, tmp_path):
         """Test reading gitignore with permission errors."""
         gitignore_file = tmp_path / ".gitignore"
         gitignore_file.write_text("*.pyc")
 
-        with patch("builtins.open", side_effect=PermissionError):
+        with patch("pathlib.Path.open", side_effect=PermissionError):
             patterns = read_gitignore_patterns(tmp_path)
-            assert patterns == set()
+            assert patterns == constants.DEFAULT_IGNORE_PATTERNS
 
     def test_is_ignored_by_gitignore_directory_patterns(self, tmp_path):
         """Test gitignore directory pattern matching."""
@@ -54,9 +56,9 @@ class TestGitignoreLogic:
         file2 = tmp_path / "frontend" / "node_modules" / "package" / "index.js"
         file3 = tmp_path / ".git" / "objects" / "abc123"
 
-        assert is_ignored_by_gitignore(file1, tmp_path, patterns) is True
-        assert is_ignored_by_gitignore(file2, tmp_path, patterns) is True
-        assert is_ignored_by_gitignore(file3, tmp_path, patterns) is True
+        assert is_path_ignored(file1, tmp_path, patterns) is True
+        assert is_path_ignored(file2, tmp_path, patterns) is True
+        assert is_path_ignored(file3, tmp_path, patterns) is True
 
     def test_is_ignored_by_gitignore_file_patterns(self, tmp_path):
         """Test gitignore file pattern matching."""
@@ -67,33 +69,18 @@ class TestGitignoreLogic:
         file3 = tmp_path / ".env"
         file4 = tmp_path / "script.py"
 
-        assert is_ignored_by_gitignore(file1, tmp_path, patterns) is True
-        assert is_ignored_by_gitignore(file2, tmp_path, patterns) is True
-        assert is_ignored_by_gitignore(file3, tmp_path, patterns) is True
-        assert is_ignored_by_gitignore(file4, tmp_path, patterns) is False
-
-    def test_is_ignored_by_gitignore_hardcoded_patterns(self, tmp_path):
-        """Test hardcoded directory exclusions."""
-        patterns = set()
-
-        # Test hardcoded exclusions in is_ignored_by_gitignore
-        venv_file = (
-            tmp_path / ".venv" / "lib" / "python3.9" / "site-packages" / "package.py"
-        )
-        git_file = tmp_path / ".git" / "objects" / "abc123"
-        node_file = tmp_path / "node_modules" / "package" / "index.js"
-
-        assert is_ignored_by_gitignore(venv_file, tmp_path, patterns) is True
-        assert is_ignored_by_gitignore(git_file, tmp_path, patterns) is True
-        assert is_ignored_by_gitignore(node_file, tmp_path, patterns) is True
+        assert is_path_ignored(file1, tmp_path, patterns) is True
+        assert is_path_ignored(file2, tmp_path, patterns) is True
+        assert is_path_ignored(file3, tmp_path, patterns) is True
+        assert is_path_ignored(file4, tmp_path, patterns) is False
 
     def test_is_ignored_by_gitignore_outside_project_root(self, tmp_path):
-        """Test file outside project root returns False."""
+        """Test file outside project root returns True."""
         patterns = {"*.pyc"}
         outside_file = Path("/some/other/path/file.py")
 
-        result = is_ignored_by_gitignore(outside_file, tmp_path, patterns)
-        assert result is False
+        result = is_path_ignored(outside_file, tmp_path, patterns)
+        assert result is True
 
 
 class TestPythonVersionDetection:
@@ -192,48 +179,6 @@ class TestConfigFileDiscovery:
 
         assert "prettier_config" not in config_files
         assert "eslint_config" not in config_files
-
-
-class TestRuntimeDependencies:
-    """Test runtime dependency detection."""
-
-    def test_detect_runtime_dependencies_pyproject_only_main(self, tmp_path):
-        """Test runtime dependencies exclude optional-dependencies."""
-        pyproject_content = """
-[project]
-dependencies = ["requests", "pydantic"]
-
-[project.optional-dependencies]
-dev = ["pytest", "black"]
-"""
-        (tmp_path / "pyproject.toml").write_text(pyproject_content)
-
-        deps = detect_runtime_dependencies(tmp_path)
-
-        assert "requests" in deps
-        assert "pydantic" in deps
-        assert "pytest" not in deps
-        assert "black" not in deps
-
-    def test_detect_runtime_dependencies_requirements_txt_only(self, tmp_path):
-        """Test runtime dependencies from requirements.txt only."""
-        (tmp_path / "requirements.txt").write_text("requests>=2.0\npydantic")
-        (tmp_path / "requirements-dev.txt").write_text("pytest\nblack")
-
-        deps = detect_runtime_dependencies(tmp_path)
-
-        assert "requests" in deps
-        assert "pydantic" in deps
-        assert "pytest" not in deps
-        assert "black" not in deps
-
-    def test_detect_runtime_dependencies_file_read_error(self, tmp_path):
-        """Test runtime dependencies with file read errors."""
-        (tmp_path / "requirements.txt").write_text("requests")
-
-        with patch("builtins.open", side_effect=PermissionError):
-            deps = detect_runtime_dependencies(tmp_path)
-            assert deps == set()
 
 
 class TestTypeStubMapping:

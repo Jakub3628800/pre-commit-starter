@@ -1,0 +1,138 @@
+"""This module contains constant data used throughout the application."""
+
+# Mapping of package names to their type stub packages for MyPy
+MYPY_PACKAGE_TO_STUB_MAP = {
+    "PyYAML": "types-PyYAML",
+    "yaml": "types-PyYAML",
+    "requests": "types-requests",
+    "setuptools": "types-setuptools",
+    "toml": "types-toml",
+    "redis": "types-redis",
+    "pillow": "types-Pillow",
+    "beautifulsoup4": "types-beautifulsoup4",
+    "chardet": "types-chardet",
+    "dateutil": "types-python-dateutil",
+    "docutils": "types-docutils",
+    "flask": "types-Flask",
+    "jinja2": "types-Jinja2",
+    "markdown": "types-Markdown",
+    "protobuf": "types-protobuf",
+    "psutil": "types-psutil",
+    "pytz": "types-pytz",
+    "six": "types-six",
+    "sqlalchemy": "types-SQLAlchemy",
+    "tabulate": "types-tabulate",
+    "urllib3": "types-urllib3",
+}
+
+# Mapping of import names to package names, for cases where they differ.
+IMPORT_TO_PACKAGE_MAP = {"yaml": "PyYAML"}
+
+# Default patterns for ignoring files and directories
+DEFAULT_IGNORE_PATTERNS = {
+    ".git/",
+    "__pycache__/",
+    "node_modules/",
+    ".venv/",
+    "venv/",
+    "env/",
+    "build/",
+    "dist/",
+    ".pytest_cache/",
+    ".mypy_cache/",
+    ".ruff_cache/",
+}
+
+# --- Technology & File Type Indicators ---
+PYTHON_INDICATORS = {
+    "setup.py",
+    "pyproject.toml",
+    "requirements.txt",
+    "pipfile",
+    "poetry.lock",
+    "setup.cfg",
+    "tox.ini",
+    "pytest.ini",
+    ".py",
+    "manage.py",
+    "__init__.py",
+}
+UV_LOCK_INDICATORS = {"uv.lock"}
+JS_INDICATORS = {
+    "package.json",
+    "yarn.lock",
+    "package-lock.json",
+    "npm-shrinkwrap.json",
+    ".js",
+    ".mjs",
+    ".cjs",
+    "webpack.config.js",
+    "vite.config.js",
+    "rollup.config.js",
+    "babel.config.js",
+    ".babelrc",
+}
+TS_INDICATORS = {
+    "tsconfig.json",
+    "tsconfig.base.json",
+    "tsconfig.build.json",
+    ".ts",
+    ".tsx",
+    ".d.ts",
+}
+JSX_INDICATORS = {
+    ".jsx",
+    ".tsx",
+    "next.config.js",
+    "gatsby-config.js",
+    "react-scripts",
+    ".storybook",
+}
+GO_INDICATORS = {"go.mod", "go.sum", "main.go", ".go", "vendor"}
+DOCKER_INDICATORS = {
+    "dockerfile",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    ".dockerignore",
+    "dockerfile.dev",
+    "dockerfile.prod",
+}
+YAML_INDICATORS = {".yml", ".yaml", "docker-compose.yml", "docker-compose.yaml"}
+JSON_INDICATORS = {".json"}
+TOML_INDICATORS = {".toml", "pyproject.toml"}
+XML_INDICATORS = {".xml"}
+
+
+# A comprehensive set of Python 3.10 standard library modules.
+STANDARD_LIBRARY_MODULES = {
+    "abc", "aifc", "argparse", "array", "ast", "asynchat", "asyncio",
+    "asyncore", "atexit", "audioop", "base64", "bdb", "binascii", "binhex",
+    "bisect", "builtins", "bz2", "calendar", "cgi", "cgitb", "chunk", "cmath",
+    "cmd", "code", "codecs", "codeop", "collections", "colorsys", "compileall",
+    "concurrent", "configparser", "contextlib", "contextvars", "copy", "copyreg",
+    "crypt", "csv", "ctypes", "curses", "dataclasses", "datetime", "dbm",
+    "decimal", "difflib", "dis", "distutils", "doctest", "email", "encodings",
+    "ensurepip", "enum", "errno", "faulthandler", "fcntl", "filecmp",
+    "fileinput", "fnmatch", "fractions", "ftplib", "functools", "gc", "getopt",
+    "getpass", "gettext", "glob", "graphlib", "grp", "gzip", "hashlib",
+    "heapq", "hmac", "html", "http", "idlelib", "imaplib", "imghdr", "imp",
+    "importlib", "inspect", "io", "ipaddress", "itertools", "json", "keyword",
+    "lib2to3", "linecache", "locale", "logging", "lzma", "mailbox", "mailcap",
+    "marshal", "math", "mimetypes", "mmap", "modulefinder", "multiprocessing",
+    "netrc", "nis", "nntplib", "numbers", "operator", "optparse", "os",
+    "ossaudiodev", "parser", "pathlib", "pdb", "pickle", "pickletools",
+    "pipes", "pkgutil", "platform", "plistlib", "poplib", "posix", "pprint",
+    "profile", "pstats", "pty", "pwd", "py_compile", "pyclbr", "pydoc",
+    "pydoc_data", "pyexpat", "queue", "quopri", "random", "re", "readline",
+    "reprlib", "resource", "rlcompleter", "runpy", "sched", "secrets",
+    "select", "selectors", "shelve", "shlex", "shutil", "signal", "site",
+    "smtpd", "smtplib", "sndhdr", "socket", "socketserver", "spwd", "sqlite3",
+    "ssl", "stat", "statistics", "string", "stringprep", "struct",
+    "subprocess", "sunau", "symtable", "sys", "sysconfig", "syslog",
+    "tabnanny", "tarfile", "telnetlib", "tempfile", "termios", "textwrap",
+    "threading", "time", "timeit", "tkinter", "token", "tokenize", "tomllib",
+    "trace", "traceback", "tracemalloc", "tty", "turtle", "turtledemo",
+    "types", "typing", "unicodedata", "unittest", "urllib", "uu", "uuid",
+    "venv", "warnings", "wave", "weakref", "webbrowser", "wsgiref", "xdrlib",
+    "xml", "xmlrpc", "zipapp", "zipfile", "zipimport", "zlib", "zoneinfo",
+}

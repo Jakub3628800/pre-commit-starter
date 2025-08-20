@@ -6,178 +6,77 @@ import json
 from pathlib import Path
 from typing import Optional
 
+from . import constants
 from .config import PreCommitConfig
 
-# Mapping of package names to their type stub packages
-MYPY_PACKAGE_TO_STUB_MAP = {
-    "PyYAML": "types-PyYAML",
-    "yaml": "types-PyYAML",
-    "requests": "types-requests",
-    "setuptools": "types-setuptools",
-    "toml": "types-toml",
-    "redis": "types-redis",
-    "pillow": "types-Pillow",
-    "beautifulsoup4": "types-beautifulsoup4",
-    "chardet": "types-chardet",
-    "dateutil": "types-python-dateutil",
-    "docutils": "types-docutils",
-    "flask": "types-Flask",
-    "jinja2": "types-Jinja2",
-    "markdown": "types-Markdown",
-    "protobuf": "types-protobuf",
-    "psutil": "types-psutil",
-    "pytz": "types-pytz",
-    "six": "types-six",
-    "sqlalchemy": "types-SQLAlchemy",
-    "tabulate": "types-tabulate",
-    "urllib3": "types-urllib3",
-}
+
+def _parse_dependency_name(dep: str) -> str:
+    """Extracts the package name from a dependency string."""
+    # This is a simple parser, might not cover all edge cases
+    # e.g. `requests[security]>=2.0.0` -> `requests`
+    for marker in ["==", ">=", "<=", "~=", ">", "<", "["]:
+        if marker in dep:
+            dep = dep.split(marker)[0]
+    return dep.strip()
 
 
-def detect_project_dependencies(path: Path) -> set[str]:
-    """Detect project dependencies from pyproject.toml, requirements.txt, etc."""
-    dependencies = set()
+def detect_dependencies(path: Path, *, include_dev: bool) -> set[str]:
+    """
+    Detect project dependencies from pyproject.toml and requirements files.
 
-    # Check pyproject.toml
+    :param path: The project path to scan.
+    :param include_dev: Whether to include development dependencies.
+    """
+    dependencies: set[str] = set()
     pyproject_file = path / "pyproject.toml"
-    if pyproject_file.exists():
-        toml_lib = None
+
+    # 1. Parse pyproject.toml
+    if pyproject_file.is_file():
+        tomllib = None
         try:
             import tomllib
-
-            toml_lib = tomllib
         except ImportError:
             try:
-                import tomli
-
-                toml_lib = tomli
+                import tomli as tomllib
             except ImportError:
-                pass
+                pass  # No TOML parser available
 
-        if toml_lib:
+        if tomllib:
             try:
-                with open(pyproject_file, "rb") as f:
-                    data = toml_lib.load(f)
+                with pyproject_file.open("rb") as f:
+                    data = tomllib.load(f)
+                project_data = data.get("project", {})
 
-                # Get dependencies from project.dependencies
-                if "project" in data and "dependencies" in data["project"]:
-                    for dep in data["project"]["dependencies"]:
-                        # Extract package name (before ==, >=, etc.)
-                        pkg_name = (
-                            dep.split("==")[0]
-                            .split(">=")[0]
-                            .split("<=")[0]
-                            .split("~=")[0]
-                            .strip()
-                        )
-                        dependencies.add(pkg_name)
+                # Main dependencies
+                main_deps = project_data.get("dependencies", [])
+                for dep in main_deps:
+                    dependencies.add(_parse_dependency_name(dep))
 
-                # Get dev dependencies
-                if "project" in data and "optional-dependencies" in data["project"]:
-                    for group in data["project"]["optional-dependencies"].values():
+                # Optional/dev dependencies
+                if include_dev:
+                    opt_deps = project_data.get("optional-dependencies", {})
+                    for group in opt_deps.values():
                         for dep in group:
-                            pkg_name = (
-                                dep.split("==")[0]
-                                .split(">=")[0]
-                                .split("<=")[0]
-                                .split("~=")[0]
-                                .strip()
-                            )
-                            dependencies.add(pkg_name)
+                            dependencies.add(_parse_dependency_name(dep))
+            except (tomllib.TOMLDecodeError, IOError, OSError):
+                pass  # Ignore malformed TOML or file read errors
 
-            except Exception:
-                pass
+    # 2. Parse requirements files
+    req_files = ["requirements.txt"]
+    if include_dev:
+        req_files.extend(["requirements-dev.txt", "dev-requirements.txt"])
 
-    # Check requirements.txt files
-    for req_file in [
-        "requirements.txt",
-        "requirements-dev.txt",
-        "dev-requirements.txt",
-    ]:
-        req_path = path / req_file
-        if req_path.exists():
+    for req_filename in req_files:
+        req_file = path / req_filename
+        if req_file.is_file():
             try:
-                with open(req_path, encoding="utf-8") as f:
-                    for raw_line in f:
-                        line = raw_line.strip()
-                        if (
-                            line
-                            and not line.startswith("#")
-                            and not line.startswith("-")
-                        ):
-                            pkg_name = (
-                                line.split("==")[0]
-                                .split(">=")[0]
-                                .split("<=")[0]
-                                .split("~=")[0]
-                                .strip()
-                            )
-                            dependencies.add(pkg_name)
-            except Exception:
+                with req_file.open(encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith(("#", "-")):
+                            dependencies.add(_parse_dependency_name(line))
+            except (IOError, OSError, UnicodeDecodeError):
                 pass
-
-    return dependencies
-
-
-def detect_runtime_dependencies(path: Path) -> set[str]:
-    """Detect only runtime dependencies (not dev dependencies) for MyPy additional_dependencies."""
-    dependencies = set()
-
-    # Check pyproject.toml - only main dependencies, not optional-dependencies
-    pyproject_file = path / "pyproject.toml"
-    if pyproject_file.exists():
-        toml_lib = None
-        try:
-            import tomllib
-
-            toml_lib = tomllib
-        except ImportError:
-            try:
-                import tomli
-
-                toml_lib = tomli
-            except ImportError:
-                pass
-
-        if toml_lib:
-            try:
-                with open(pyproject_file, "rb") as f:
-                    data = toml_lib.load(f)
-
-                # Get dependencies from project.dependencies ONLY (not optional-dependencies)
-                if "project" in data and "dependencies" in data["project"]:
-                    for dep in data["project"]["dependencies"]:
-                        # Extract package name (before ==, >=, etc.)
-                        pkg_name = (
-                            dep.split("==")[0]
-                            .split(">=")[0]
-                            .split("<=")[0]
-                            .split("~=")[0]
-                            .strip()
-                        )
-                        dependencies.add(pkg_name)
-
-            except Exception:
-                pass
-
-    # Check only main requirements.txt (not dev requirements files)
-    req_path = path / "requirements.txt"
-    if req_path.exists():
-        try:
-            with open(req_path, encoding="utf-8") as f:
-                for raw_line in f:
-                    line = raw_line.strip()
-                    if line and not line.startswith("#") and not line.startswith("-"):
-                        pkg_name = (
-                            line.split("==")[0]
-                            .split(">=")[0]
-                            .split("<=")[0]
-                            .split("~=")[0]
-                            .strip()
-                        )
-                        dependencies.add(pkg_name)
-        except Exception:
-            pass
 
     return dependencies
 
@@ -189,8 +88,8 @@ def get_required_type_stubs(dependencies: set[str]) -> set[str]:
     for dep in dependencies:
         # Check both the exact name and lowercase version
         for pkg_name in [dep, dep.lower()]:
-            if pkg_name in MYPY_PACKAGE_TO_STUB_MAP:
-                required_stubs.add(MYPY_PACKAGE_TO_STUB_MAP[pkg_name])
+            if pkg_name in constants.MYPY_PACKAGE_TO_STUB_MAP:
+                required_stubs.add(constants.MYPY_PACKAGE_TO_STUB_MAP[pkg_name])
                 break
 
     return required_stubs
@@ -198,189 +97,109 @@ def get_required_type_stubs(dependencies: set[str]) -> set[str]:
 
 def should_include_mypy_stubs(path: Path) -> bool:
     """Check if project should include type stubs for MyPy."""
-    dependencies = detect_project_dependencies(path)
+    dependencies = detect_dependencies(path, include_dev=True)
     required_stubs = get_required_type_stubs(dependencies)
     return len(required_stubs) > 0
 
 
 def read_gitignore_patterns(path: Path) -> set[str]:
-    """Read .gitignore file and return patterns."""
+    """Read .gitignore file and return patterns, including sensible defaults."""
+    patterns = set(constants.DEFAULT_IGNORE_PATTERNS)
     gitignore_file = path / ".gitignore"
-    patterns = set()
-
-    if gitignore_file.exists():
+    if gitignore_file.is_file():
         try:
-            with open(gitignore_file, encoding="utf-8") as f:
-                for raw_line in f:
-                    line = raw_line.strip()
-                    # Skip empty lines and comments
+            with gitignore_file.open(encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
                     if line and not line.startswith("#"):
                         patterns.add(line)
-        except Exception:
-            # If we can't read gitignore, continue without it
-            pass
-
+        except IOError:
+            pass  # Ignore errors if .gitignore can't be read
     return patterns
 
 
-def is_ignored_by_gitignore(
-    file_path: Path, project_root: Path, gitignore_patterns: set[str]
+def is_path_ignored(
+    file_path: Path, project_root: Path, ignore_patterns: set[str]
 ) -> bool:
-    """Check if a file should be ignored based on gitignore patterns."""
+    """Check if a file should be ignored based on gitignore-style patterns."""
     try:
-        # Get relative path from project root
         rel_path = file_path.relative_to(project_root)
-        rel_path_str = str(rel_path)
-
-        # Check if file is in any parent directory that should be ignored
-        for part in rel_path.parts:
-            if part in {".git", ".venv", "venv", "env", "node_modules", "__pycache__"}:
-                return True
-
-        for pattern in gitignore_patterns:
-            # Handle directory patterns (ending with /)
-            if pattern.endswith("/"):
-                if fnmatch.fnmatch(rel_path_str + "/", pattern) or fnmatch.fnmatch(
-                    rel_path_str, pattern[:-1]
-                ):
-                    return True
-            # Handle file patterns
-            elif fnmatch.fnmatch(rel_path_str, pattern) or fnmatch.fnmatch(
-                file_path.name, pattern
-            ):
-                return True
-
-        return False
     except ValueError:
-        # File is not relative to project root
-        return False
+        return True  # File is not relative to the project root
+
+    dir_patterns = {p.rstrip("/") for p in ignore_patterns if p.endswith("/")}
+    file_patterns = {p for p in ignore_patterns if not p.endswith("/")}
+
+    # 1. Check if the file is in an ignored directory
+    # This checks if any part of the path is a subdirectory to be ignored
+    if any(part in dir_patterns for part in rel_path.parts):
+        return True
+
+    # 2. Check if the file path or name matches a file pattern
+    rel_path_str = str(rel_path)
+    for pattern in file_patterns:
+        if fnmatch.fnmatch(rel_path_str, pattern) or fnmatch.fnmatch(
+            file_path.name, pattern
+        ):
+            return True
+
+    return False
 
 
 def discover_files(path: Path) -> set[str]:
     """Discover all files in the given path (recursive), respecting .gitignore."""
-    files = set()
-
-    # Read gitignore patterns
-    gitignore_patterns = read_gitignore_patterns(path)
-
-    # Always exclude .git directory regardless of gitignore
-    gitignore_patterns.add(".git/")
-    gitignore_patterns.add(".git")
-
-    # Add some basic patterns if no gitignore exists
-    if len(gitignore_patterns) <= 2:  # Only .git patterns added
-        gitignore_patterns.update(
-            {
-                "__pycache__/",
-                "node_modules/",
-                ".venv/",
-                "venv/",
-                "env/",
-                "build/",
-                "dist/",
-                ".pytest_cache/",
-                ".mypy_cache/",
-                ".ruff_cache/",
-            }
-        )
+    discovered_items = set()
+    ignore_patterns = read_gitignore_patterns(path)
 
     for file_path in path.rglob("*"):
-        if file_path.is_file():
-            # Skip if ignored by gitignore patterns
-            if not is_ignored_by_gitignore(file_path, path, gitignore_patterns):
-                files.add(file_path.name.lower())
-                # Also add file extensions
-                if file_path.suffix:
-                    files.add(file_path.suffix.lower())
+        if file_path.is_file() and not is_path_ignored(
+            file_path, path, ignore_patterns
+        ):
+            discovered_items.add(file_path.name.lower())
+            if file_path.suffix:
+                discovered_items.add(file_path.suffix.lower())
 
-    return files
+    return discovered_items
+
+
+def _has_any_file(files: set[str], indicators: set[str]) -> bool:
+    """Check if any of the indicator files are present in the discovered files."""
+    return not files.isdisjoint(indicators)
 
 
 def detect_python(files: set[str]) -> bool:
     """Detect if this is a Python project."""
-    python_indicators = {
-        "setup.py",
-        "pyproject.toml",
-        "requirements.txt",
-        "pipfile",
-        "poetry.lock",
-        "setup.cfg",
-        "tox.ini",
-        "pytest.ini",
-        ".py",
-        "manage.py",
-        "__init__.py",
-    }
-    return bool(python_indicators & files)
+    return _has_any_file(files, constants.PYTHON_INDICATORS)
 
 
 def detect_uv_lock(files: set[str]) -> bool:
     """Detect if project uses uv with uv.lock file."""
-    return "uv.lock" in files
+    return _has_any_file(files, constants.UV_LOCK_INDICATORS)
 
 
 def detect_javascript(files: set[str]) -> bool:
     """Detect if this is a JavaScript project."""
-    js_indicators = {
-        "package.json",
-        "yarn.lock",
-        "package-lock.json",
-        "npm-shrinkwrap.json",
-        ".js",
-        ".mjs",
-        ".cjs",
-        "webpack.config.js",
-        "vite.config.js",
-        "rollup.config.js",
-        "babel.config.js",
-        ".babelrc",
-    }
-    return bool(js_indicators & files)
+    return _has_any_file(files, constants.JS_INDICATORS)
 
 
 def detect_typescript(files: set[str]) -> bool:
     """Detect if project uses TypeScript."""
-    ts_indicators = {
-        "tsconfig.json",
-        "tsconfig.base.json",
-        "tsconfig.build.json",
-        ".ts",
-        ".tsx",
-        ".d.ts",
-    }
-    return bool(ts_indicators & files)
+    return _has_any_file(files, constants.TS_INDICATORS)
 
 
 def detect_jsx(files: set[str]) -> bool:
     """Detect if project uses JSX/React."""
-    jsx_indicators = {
-        ".jsx",
-        ".tsx",
-        "next.config.js",
-        "gatsby-config.js",
-        "react-scripts",
-        ".storybook",
-    }
-    return bool(jsx_indicators & files)
+    return _has_any_file(files, constants.JSX_INDICATORS)
 
 
 def detect_go(files: set[str]) -> bool:
     """Detect if this is a Go project."""
-    go_indicators = {"go.mod", "go.sum", "main.go", ".go", "vendor"}
-    return bool(go_indicators & files)
+    return _has_any_file(files, constants.GO_INDICATORS)
 
 
 def detect_docker(files: set[str]) -> bool:
     """Detect if project uses Docker."""
-    docker_indicators = {
-        "dockerfile",
-        "docker-compose.yml",
-        "docker-compose.yaml",
-        ".dockerignore",
-        "dockerfile.dev",
-        "dockerfile.prod",
-    }
-    return bool(docker_indicators & files)
+    return _has_any_file(files, constants.DOCKER_INDICATORS)
 
 
 def detect_github_actions(files: set[str], path: Path) -> bool:
@@ -397,23 +216,22 @@ def detect_github_actions(files: set[str], path: Path) -> bool:
 
 def detect_yaml_files(files: set[str]) -> bool:
     """Detect if project has YAML files."""
-    yaml_indicators = {".yml", ".yaml", "docker-compose.yml", "docker-compose.yaml"}
-    return bool(yaml_indicators & files)
+    return _has_any_file(files, constants.YAML_INDICATORS)
 
 
 def detect_json_files(files: set[str]) -> bool:
     """Detect if project has JSON files."""
-    return ".json" in files
+    return _has_any_file(files, constants.JSON_INDICATORS)
 
 
 def detect_toml_files(files: set[str]) -> bool:
     """Detect if project has TOML files."""
-    return ".toml" in files or "pyproject.toml" in files
+    return _has_any_file(files, constants.TOML_INDICATORS)
 
 
 def detect_xml_files(files: set[str]) -> bool:
     """Detect if project has XML files."""
-    return ".xml" in files
+    return _has_any_file(files, constants.XML_INDICATORS)
 
 
 def detect_python_version(path: Path) -> Optional[str]:
@@ -421,22 +239,30 @@ def detect_python_version(path: Path) -> Optional[str]:
     # Check pyproject.toml
     pyproject_file = path / "pyproject.toml"
     if pyproject_file.exists():
+        tomllib = None
         try:
             import tomllib
+        except ImportError:
+            try:
+                import tomli as tomllib
+            except ImportError:
+                pass  # No TOML parser available
 
-            with open(pyproject_file, "rb") as f:
-                data = tomllib.load(f)
+        if tomllib:
+            try:
+                with open(pyproject_file, "rb") as f:
+                    data = tomllib.load(f)
 
-            # Check requires-python
-            project = data.get("project", {})
-            requires_python = project.get("requires-python")
-            if requires_python and isinstance(requires_python, str):
-                # Extract version like ">=3.9" -> "python3.9"
-                if ">=" in requires_python:
-                    version = requires_python.split(">=")[1].strip()
-                    return f"python{version}"
-        except Exception:
-            pass
+                # Check requires-python
+                project = data.get("project", {})
+                requires_python = project.get("requires-python")
+                if requires_python and isinstance(requires_python, str):
+                    # Extract version like ">=3.9" -> "python3.9"
+                    if ">=" in requires_python:
+                        version = requires_python.split(">=")[1].strip()
+                        return f"python{version}"
+            except (tomllib.TOMLDecodeError, IOError, OSError):
+                pass  # Ignore malformed TOML or file read errors
 
     # Check .python-version file
     python_version_file = path / ".python-version"
@@ -446,123 +272,68 @@ def detect_python_version(path: Path) -> Optional[str]:
             if version and not version.startswith("python"):
                 return f"python{version}"
             return version if version else None
-        except Exception:
+        except (IOError, OSError, UnicodeDecodeError):
             pass
 
     return None
 
 
-def _get_used_imports(path: Path) -> set[str]:
-    """Get imports actually used in the project code."""
-    import ast
-    import os
-
-    used_imports = set()
-
-    # Find all Python files in the project
-    for root, _, files in os.walk(path):
-        for file in files:
-            if file.endswith(".py"):
-                file_path = os.path.join(root, file)
-                # Skip virtual environments and cache directories
-                if any(part in file_path for part in [".venv", "__pycache__", ".git"]):
-                    continue
-
-                try:
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        tree = ast.parse(f.read())
-
-                    for node in ast.walk(tree):
-                        if isinstance(node, ast.Import):
-                            for alias in node.names:
-                                import_name = alias.name.split(".")[0]
-                                # Skip standard library and local modules
-                                if not _is_standard_library(
-                                    import_name
-                                ) and not _is_local_module(import_name, path):
-                                    # Map yaml to PyYAML
-                                    if import_name == "yaml":
-                                        used_imports.add("PyYAML")
-                                    else:
-                                        used_imports.add(import_name)
-                        elif isinstance(node, ast.ImportFrom):
-                            if node.module:
-                                import_name = node.module.split(".")[0]
-                                # Skip standard library and local modules
-                                if not _is_standard_library(
-                                    import_name
-                                ) and not _is_local_module(import_name, path):
-                                    # Map yaml to PyYAML
-                                    if import_name == "yaml":
-                                        used_imports.add("PyYAML")
-                                    else:
-                                        used_imports.add(import_name)
-                except Exception:
-                    # Skip files that can't be parsed
-                    continue
-
-    return used_imports
-
-
+# --- Import Discovery ---
 def _is_standard_library(module_name: str) -> bool:
     """Check if a module is part of the Python standard library."""
-    # Common standard library modules
-    stdlib_modules = {
-        "argparse",
-        "ast",
-        "collections",
-        "csv",
-        "datetime",
-        "email",
-        "fnmatch",
-        "functools",
-        "glob",
-        "hashlib",
-        "io",
-        "json",
-        "logging",
-        "math",
-        "os",
-        "pathlib",
-        "random",
-        "re",
-        "shutil",
-        "socket",
-        "sqlite3",
-        "ssl",
-        "stat",
-        "string",
-        "subprocess",
-        "sys",
-        "tempfile",
-        "threading",
-        "time",
-        "tkinter",
-        "tomllib",
-        "types",
-        "typing",
-        "unittest",
-        "urllib",
-        "uuid",
-        "xml",
-        "zipfile",
-    }
-
-    return module_name in stdlib_modules
+    return module_name in constants.STANDARD_LIBRARY_MODULES
 
 
-def _is_local_module(module_name: str, project_path: Path) -> bool:
-    """Check if a module is a local project module."""
-    # Local modules in this project
-    local_modules = {
-        "config",
-        "discover",
-        "main",
-        "render_template",
-        "pre_commit_starter",
-    }
+def _discover_local_modules(project_path: Path) -> set[str]:
+    """Discovers top-level local modules in the project."""
+    local_modules = set()
+    for p in project_path.iterdir():
+        if p.is_dir() and (p / "__init__.py").is_file():
+            local_modules.add(p.name)
+        elif p.is_file() and p.suffix == ".py":
+            local_modules.add(p.stem)
+    return local_modules
 
-    return module_name in local_modules
+
+def _get_used_imports(path: Path) -> set[str]:
+    """Get third-party imports used in the project code by parsing Python files."""
+    import ast
+
+    used_imports: set[str] = set()
+    local_modules = _discover_local_modules(path)
+    ignore_patterns = read_gitignore_patterns(path)
+
+    for file_path in path.rglob("*.py"):
+        if is_path_ignored(file_path, path, ignore_patterns):
+            continue
+
+        try:
+            content = file_path.read_text(encoding="utf-8")
+            tree = ast.parse(content, filename=str(file_path))
+        except (SyntaxError, IOError, UnicodeDecodeError, TypeError):
+            continue  # Skip files that can't be parsed
+
+        for node in ast.walk(tree):
+            import_name: Optional[str] = None
+            if isinstance(node, ast.Import):
+                if node.names:
+                    # Get the top-level package of the import
+                    import_name = node.names[0].name.split(".")[0]
+            elif isinstance(node, ast.ImportFrom):
+                if node.module and node.level == 0:  # Absolute imports only
+                    import_name = node.module.split(".")[0]
+
+            if import_name:
+                if (
+                    import_name not in local_modules
+                    and not _is_standard_library(import_name)
+                ):
+                    package_name = constants.IMPORT_TO_PACKAGE_MAP.get(
+                        import_name, import_name
+                    )
+                    used_imports.add(package_name)
+
+    return used_imports
 
 
 def find_config_files(path: Path, files: set[str]) -> dict:
