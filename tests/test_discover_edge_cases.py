@@ -299,7 +299,8 @@ dependencies = ["requests"]
         output_data = json.loads(captured.out)
 
         assert output_data["python"] is True
-        assert "requests" in output_data["additional_dependencies"]
+        # additional_dependencies should be None since no imports are used
+        assert output_data["additional_dependencies"] is None
 
     def test_discover_main_yaml_output(self, tmp_path, capsys):
         """Test CLI YAML output."""
