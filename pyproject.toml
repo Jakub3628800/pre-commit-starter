@@ -7,7 +7,7 @@ name = "pre-commit-starter"
 version = "0.1.0"
 description = "A starter CLI tool for pre-commit configurations"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 license = {text = "MIT"}
 authors = [
     {name = "Pre-Commit Starter Team"}
@@ -19,9 +19,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Quality Assurance",
     "Topic :: Software Development :: Version Control :: Git",
@@ -31,7 +28,6 @@ dependencies = [
     "rich>=13.0.0",
     "jinja2>=3.1.0",
     "pydantic>=2.0.0",
-    "tomli>=2.0.0; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]
@@ -58,29 +54,3 @@ pre-commit-starter = "pre_commit_starter.main:main"
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
 ]
-
-[tool.mypy]
-python_version = "3.9"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-check_untyped_defs = false
-disallow_untyped_decorators = false
-
-[[tool.mypy.overrides]]
-module = "tomllib"
-ignore_missing_imports = true
