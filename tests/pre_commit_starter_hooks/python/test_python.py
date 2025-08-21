@@ -8,7 +8,7 @@ import yaml
 # Add root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from pre_commit_starter.render_template import generate_python_hooks
+from pre_commit_starter.hook_templates import generate_python_hooks
 
 
 def test_generate_python_hooks_basic():
@@ -134,4 +134,4 @@ def test_ruff_hook_args():
     )
     assert ruff_hook is not None
     assert "args" in ruff_hook
-    assert ruff_hook["args"] == ["--fix"]
+    assert ruff_hook["args"] == ["--line-length=120"]
