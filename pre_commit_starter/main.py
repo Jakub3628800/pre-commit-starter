@@ -11,7 +11,7 @@ from rich.table import Table
 
 from .config import PreCommitConfig
 from .discover import discover_config
-from .render_template import render_config
+from .hook_templates import render_config
 
 console = Console()
 
