@@ -24,9 +24,7 @@ def test_generate_python_hooks_basic():
     assert len(parsed_repos) >= min_expected_repos
 
     # Check ruff repo
-    ruff_repo = next(
-        (repo for repo in parsed_repos if "ruff-pre-commit" in repo["repo"]), None
-    )
+    ruff_repo = next((repo for repo in parsed_repos if "ruff-pre-commit" in repo["repo"]), None)
     assert ruff_repo is not None
     assert ruff_repo["repo"] == "https://github.com/astral-sh/ruff-pre-commit"
     assert ruff_repo["rev"] == "v0.12.2"
@@ -36,9 +34,7 @@ def test_generate_python_hooks_basic():
     assert "ruff" in ruff_hook_ids
 
     # Check mypy repo
-    mypy_repo = next(
-        (repo for repo in parsed_repos if "mirrors-mypy" in repo["repo"]), None
-    )
+    mypy_repo = next((repo for repo in parsed_repos if "mirrors-mypy" in repo["repo"]), None)
     assert mypy_repo is not None
     assert mypy_repo["repo"] == "https://github.com/pre-commit/mirrors-mypy"
 
@@ -55,9 +51,7 @@ def test_generate_python_hooks_with_uv_lock():
     assert isinstance(parsed_repos, list)
 
     # Should have uv repo
-    uv_repo = next(
-        (repo for repo in parsed_repos if "uv-pre-commit" in repo["repo"]), None
-    )
+    uv_repo = next((repo for repo in parsed_repos if "uv-pre-commit" in repo["repo"]), None)
     assert uv_repo is not None
     assert uv_repo["repo"] == "https://github.com/astral-sh/uv-pre-commit"
 
@@ -75,14 +69,10 @@ def test_generate_python_hooks_with_mypy_args():
     assert isinstance(parsed_repos, list)
 
     # Find mypy repo and hook
-    mypy_repo = next(
-        (repo for repo in parsed_repos if "mirrors-mypy" in repo["repo"]), None
-    )
+    mypy_repo = next((repo for repo in parsed_repos if "mirrors-mypy" in repo["repo"]), None)
     assert mypy_repo is not None
 
-    mypy_hook = next(
-        (hook for hook in mypy_repo["hooks"] if hook["id"] == "mypy"), None
-    )
+    mypy_hook = next((hook for hook in mypy_repo["hooks"] if hook["id"] == "mypy"), None)
     assert mypy_hook is not None
     assert "args" in mypy_hook
     assert mypy_hook["args"] == mypy_args
@@ -123,15 +113,11 @@ def test_ruff_hook_args():
     parsed_repos = yaml.safe_load(result)
     assert isinstance(parsed_repos, list)
 
-    ruff_repo = next(
-        (repo for repo in parsed_repos if "ruff-pre-commit" in repo["repo"]), None
-    )
+    ruff_repo = next((repo for repo in parsed_repos if "ruff-pre-commit" in repo["repo"]), None)
     assert ruff_repo is not None
 
     # Find ruff linter hook (not formatter)
-    ruff_hook = next(
-        (hook for hook in ruff_repo["hooks"] if hook["id"] == "ruff"), None
-    )
+    ruff_hook = next((hook for hook in ruff_repo["hooks"] if hook["id"] == "ruff"), None)
     assert ruff_hook is not None
     assert "args" in ruff_hook
     assert ruff_hook["args"] == ["--line-length=120"]

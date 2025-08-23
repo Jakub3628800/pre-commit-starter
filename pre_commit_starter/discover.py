@@ -63,26 +63,14 @@ def detect_project_dependencies(path: Path) -> set[str]:
                 if "project" in data and "dependencies" in data["project"]:
                     for dep in data["project"]["dependencies"]:
                         # Extract package name (before ==, >=, etc.)
-                        pkg_name = (
-                            dep.split("==")[0]
-                            .split(">=")[0]
-                            .split("<=")[0]
-                            .split("~=")[0]
-                            .strip()
-                        )
+                        pkg_name = dep.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].strip()
                         dependencies.add(pkg_name)
 
                 # Get dev dependencies
                 if "project" in data and "optional-dependencies" in data["project"]:
                     for group in data["project"]["optional-dependencies"].values():
                         for dep in group:
-                            pkg_name = (
-                                dep.split("==")[0]
-                                .split(">=")[0]
-                                .split("<=")[0]
-                                .split("~=")[0]
-                                .strip()
-                            )
+                            pkg_name = dep.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].strip()
                             dependencies.add(pkg_name)
 
             except Exception:
@@ -100,18 +88,8 @@ def detect_project_dependencies(path: Path) -> set[str]:
                 with open(req_path, encoding="utf-8") as f:
                     for raw_line in f:
                         line = raw_line.strip()
-                        if (
-                            line
-                            and not line.startswith("#")
-                            and not line.startswith("-")
-                        ):
-                            pkg_name = (
-                                line.split("==")[0]
-                                .split(">=")[0]
-                                .split("<=")[0]
-                                .split("~=")[0]
-                                .strip()
-                            )
+                        if line and not line.startswith("#") and not line.startswith("-"):
+                            pkg_name = line.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].strip()
                             dependencies.add(pkg_name)
             except Exception:
                 pass
@@ -148,13 +126,7 @@ def detect_runtime_dependencies(path: Path) -> set[str]:
                 if "project" in data and "dependencies" in data["project"]:
                     for dep in data["project"]["dependencies"]:
                         # Extract package name (before ==, >=, etc.)
-                        pkg_name = (
-                            dep.split("==")[0]
-                            .split(">=")[0]
-                            .split("<=")[0]
-                            .split("~=")[0]
-                            .strip()
-                        )
+                        pkg_name = dep.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].strip()
                         dependencies.add(pkg_name)
 
             except Exception:
@@ -168,13 +140,7 @@ def detect_runtime_dependencies(path: Path) -> set[str]:
                 for raw_line in f:
                     line = raw_line.strip()
                     if line and not line.startswith("#") and not line.startswith("-"):
-                        pkg_name = (
-                            line.split("==")[0]
-                            .split(">=")[0]
-                            .split("<=")[0]
-                            .split("~=")[0]
-                            .strip()
-                        )
+                        pkg_name = line.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].strip()
                         dependencies.add(pkg_name)
         except Exception:
             pass
@@ -223,9 +189,7 @@ def read_gitignore_patterns(path: Path) -> set[str]:
     return patterns
 
 
-def is_ignored_by_gitignore(
-    file_path: Path, project_root: Path, gitignore_patterns: set[str]
-) -> bool:
+def is_ignored_by_gitignore(file_path: Path, project_root: Path, gitignore_patterns: set[str]) -> bool:
     """Check if a file should be ignored based on gitignore patterns."""
     try:
         # Get relative path from project root
@@ -240,14 +204,10 @@ def is_ignored_by_gitignore(
         for pattern in gitignore_patterns:
             # Handle directory patterns (ending with /)
             if pattern.endswith("/"):
-                if fnmatch.fnmatch(rel_path_str + "/", pattern) or fnmatch.fnmatch(
-                    rel_path_str, pattern[:-1]
-                ):
+                if fnmatch.fnmatch(rel_path_str + "/", pattern) or fnmatch.fnmatch(rel_path_str, pattern[:-1]):
                     return True
             # Handle file patterns
-            elif fnmatch.fnmatch(rel_path_str, pattern) or fnmatch.fnmatch(
-                file_path.name, pattern
-            ):
+            elif fnmatch.fnmatch(rel_path_str, pattern) or fnmatch.fnmatch(file_path.name, pattern):
                 return True
 
         return False
@@ -388,9 +348,7 @@ def detect_github_actions(files: set[str], path: Path) -> bool:
     # Check for .github/workflows directory
     github_workflows = path / ".github" / "workflows"
     if github_workflows.exists() and github_workflows.is_dir():
-        workflow_files = list(github_workflows.glob("*.yml")) + list(
-            github_workflows.glob("*.yaml")
-        )
+        workflow_files = list(github_workflows.glob("*.yml")) + list(github_workflows.glob("*.yaml"))
         return len(workflow_files) > 0
     return False
 
@@ -477,9 +435,7 @@ def _get_used_imports(path: Path) -> set[str]:
                             for alias in node.names:
                                 import_name = alias.name.split(".")[0]
                                 # Skip standard library and local modules
-                                if not _is_standard_library(
-                                    import_name
-                                ) and not _is_local_module(import_name, path):
+                                if not _is_standard_library(import_name) and not _is_local_module(import_name, path):
                                     # Map yaml to PyYAML
                                     if import_name == "yaml":
                                         used_imports.add("PyYAML")
@@ -489,9 +445,7 @@ def _get_used_imports(path: Path) -> set[str]:
                             if node.module:
                                 import_name = node.module.split(".")[0]
                                 # Skip standard library and local modules
-                                if not _is_standard_library(
-                                    import_name
-                                ) and not _is_local_module(import_name, path):
+                                if not _is_standard_library(import_name) and not _is_local_module(import_name, path):
                                     # Map yaml to PyYAML
                                     if import_name == "yaml":
                                         used_imports.add("PyYAML")
@@ -665,9 +619,7 @@ def discover_config(path: Path) -> PreCommitConfig:
 
 def main() -> None:
     """Main function for CLI usage."""
-    parser = argparse.ArgumentParser(
-        description="Discover project technologies and generate config"
-    )
+    parser = argparse.ArgumentParser(description="Discover project technologies and generate config")
     parser.add_argument(
         "--path",
         type=Path,

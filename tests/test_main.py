@@ -19,9 +19,7 @@ class TestMainCLI:
     @patch("pre_commit_starter.main.render_config")
     @patch("subprocess.run")
     @patch("builtins.print")
-    def test_main_interactive_mode_default(
-        self, mock_print, mock_subprocess, mock_render, mock_discover
-    ):
+    def test_main_interactive_mode_default(self, mock_print, mock_subprocess, mock_render, mock_discover):
         """Test main function in default interactive mode."""
         # Setup mocks
         mock_config = PreCommitConfig(python=True, yaml_check=True)
@@ -41,9 +39,7 @@ class TestMainCLI:
     @patch("pre_commit_starter.main.render_config")
     @patch("subprocess.run")
     @patch("pathlib.Path.write_text")
-    def test_main_auto_accept_mode(
-        self, mock_write, mock_subprocess, mock_render, mock_discover
-    ):
+    def test_main_auto_accept_mode(self, mock_write, mock_subprocess, mock_render, mock_discover):
         """Test main function with -y flag."""
         # Setup mocks
         mock_config = PreCommitConfig(python=True)
@@ -114,9 +110,7 @@ class TestMainCLI:
                 with patch("pathlib.Path.write_text"):
                     main()
 
-        mock_console.print.assert_any_call(
-            "⚠️  Pre-commit setup complete but some hooks failed:"
-        )
+        mock_console.print.assert_any_call("⚠️  Pre-commit setup complete but some hooks failed:")
         mock_console.print.assert_any_call("Hook failed output")
         mock_console.print.assert_any_call("Error details")
 
@@ -126,9 +120,7 @@ class TestUserPreferences:
 
     def test_ask_user_preferences_accept_all_defaults(self):
         """Test user accepting all default preferences."""
-        detected_config = PreCommitConfig(
-            python=True, yaml=True, js=True, typescript=True
-        )
+        detected_config = PreCommitConfig(python=True, yaml=True, js=True, typescript=True)
 
         # Mock all user responses as True to accept defaults
         with patch("pre_commit_starter.main.Confirm.ask", return_value=True):
@@ -203,9 +195,7 @@ class TestUserPreferences:
             True,  # Include security scanning? (user enables)
         ]
 
-        with patch(
-            "pre_commit_starter.main.Confirm.ask", side_effect=confirm_responses
-        ):
+        with patch("pre_commit_starter.main.Confirm.ask", side_effect=confirm_responses):
             with patch("pre_commit_starter.main.Prompt.ask", return_value="python3.10"):
                 with patch("pre_commit_starter.main.console"):
                     result = ask_user_preferences(detected_config)
@@ -221,9 +211,7 @@ class TestDisplayFunctions:
 
     def test_display_detected_technologies_python_only(self):
         """Test displaying Python-only configuration."""
-        config = PreCommitConfig(
-            python=True, python_version="python3.9", yaml_check=True
-        )
+        config = PreCommitConfig(python=True, python_version="python3.9", yaml_check=True)
 
         with patch("pre_commit_starter.main.console") as mock_console:
             display_detected_technologies(config)

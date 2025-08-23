@@ -53,7 +53,5 @@ class PreCommitConfig(BaseModel):
     def validate_python_version(cls, v: str) -> str:
         """Validate Python version format."""
         if v is not None and not v.startswith("python"):
-            raise ValueError(
-                'Python version must start with "python" (e.g., python3.9)'
-            )
+            raise ValueError('Python version must start with "python" (e.g., python3.9)')
         return v
