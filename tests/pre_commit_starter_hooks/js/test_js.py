@@ -8,12 +8,12 @@ import yaml
 # Add root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from pre_commit_starter.render_template import generate_js_hooks
+from pre_commit_starter.hook_templates.render import _generate_hooks
 
 
 def test_generate_js_hooks_basic():
     """Test basic JavaScript hook generation."""
-    result = generate_js_hooks()
+    result = _generate_hooks("js")
 
     # Parse as YAML list
     parsed_repos = yaml.safe_load(result)
@@ -41,7 +41,7 @@ def test_generate_js_hooks_basic():
 
 def test_generate_js_hooks_with_typescript():
     """Test JavaScript hook generation with TypeScript support."""
-    result = generate_js_hooks(typescript=True)
+    result = _generate_hooks("js", typescript=True)
 
     # Parse as YAML list
     parsed_repos = yaml.safe_load(result)
@@ -65,7 +65,7 @@ def test_generate_js_hooks_with_typescript():
 
 def test_generate_js_hooks_with_jsx():
     """Test JavaScript hook generation with JSX support."""
-    result = generate_js_hooks(jsx=True)
+    result = _generate_hooks("js", jsx=True)
 
     # Parse as YAML list
     parsed_repos = yaml.safe_load(result)
@@ -92,8 +92,8 @@ def test_generate_js_hooks_with_configs():
     prettier_config = ".prettierrc.json"
     eslint_config = ".eslintrc.js"
 
-    result = generate_js_hooks(
-        prettier_config=prettier_config, eslint_config=eslint_config
+    result = _generate_hooks(
+        "js", prettier_config=prettier_config, eslint_config=eslint_config
     )
 
     # Parse as YAML list
@@ -127,7 +127,8 @@ def test_generate_js_hooks_with_configs():
 
 def test_generate_js_hooks_all_options():
     """Test JavaScript hook generation with all options enabled."""
-    result = generate_js_hooks(
+    result = _generate_hooks(
+        "js",
         typescript=True,
         jsx=True,
         prettier_config=".prettierrc.yaml",
@@ -152,7 +153,7 @@ def test_generate_js_hooks_all_options():
 
 def test_yaml_indentation():
     """Test that generated YAML has correct indentation."""
-    result = generate_js_hooks(typescript=True)
+    result = _generate_hooks("js", typescript=True)
 
     lines = result.split("\n")
 
@@ -179,7 +180,7 @@ def test_yaml_indentation():
 
 def test_file_type_configuration():
     """Test that file types are configured correctly."""
-    result = generate_js_hooks()
+    result = _generate_hooks("js")
 
     # Parse as YAML list
     parsed_repos = yaml.safe_load(result)

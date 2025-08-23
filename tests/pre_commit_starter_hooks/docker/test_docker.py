@@ -8,12 +8,12 @@ import yaml
 # Add root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from pre_commit_starter.render_template import generate_docker_hooks
+from pre_commit_starter.hook_templates.render import _generate_hooks
 
 
 def test_generate_docker_hooks_basic():
     """Test basic Docker hook generation."""
-    result = generate_docker_hooks()
+    result = _generate_hooks("docker")
 
     # Should have basic structure without conditional hooks
     parsed = yaml.safe_load(result)
@@ -29,7 +29,7 @@ def test_generate_docker_hooks_basic():
 
 def test_generate_docker_hooks_with_dockerfile_linting():
     """Test Docker hook generation with Dockerfile linting."""
-    result = generate_docker_hooks(dockerfile_linting=True)
+    result = _generate_hooks("docker", dockerfile_linting=True)
 
     # Parse as YAML list
     parsed_repos = yaml.safe_load(result)
@@ -54,7 +54,7 @@ def test_generate_docker_hooks_with_dockerfile_linting():
 
 def test_generate_docker_hooks_with_dockerignore_check():
     """Test Docker hook generation with dockerignore checking."""
-    result = generate_docker_hooks(dockerignore_check=True)
+    result = _generate_hooks("docker", dockerignore_check=True)
 
     parsed = yaml.safe_load(result)
     assert isinstance(parsed, list)
@@ -67,7 +67,7 @@ def test_generate_docker_hooks_with_dockerignore_check():
 
 def test_generate_docker_hooks_all_options():
     """Test Docker hook generation with all options enabled."""
-    result = generate_docker_hooks(dockerfile_linting=True, dockerignore_check=True)
+    result = _generate_hooks("docker", dockerfile_linting=True, dockerignore_check=True)
 
     # Parse as YAML list
     parsed_repos = yaml.safe_load(result)
@@ -87,7 +87,7 @@ def test_generate_docker_hooks_all_options():
 
 def test_yaml_indentation():
     """Test that generated YAML has correct indentation."""
-    result = generate_docker_hooks(dockerignore_check=True)
+    result = _generate_hooks("docker", dockerignore_check=True)
 
     lines = result.split("\n")
 
@@ -111,7 +111,7 @@ def test_yaml_indentation():
 
 def test_large_files_check_args():
     """Test that large files check has appropriate args for Docker."""
-    result = generate_docker_hooks()
+    result = _generate_hooks("docker")
 
     parsed = yaml.safe_load(result)
     assert isinstance(parsed, list)

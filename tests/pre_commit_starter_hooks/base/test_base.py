@@ -8,12 +8,12 @@ import yaml
 # Add root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from pre_commit_starter.render_template import generate_base_hooks
+from pre_commit_starter.hook_templates.render import _generate_hooks
 
 
 def test_generate_base_hooks_minimal():
     """Test basic hook generation with minimal options."""
-    result = generate_base_hooks()
+    result = _generate_hooks("base")
 
     # Parse as YAML to check structure
     parsed = yaml.safe_load(result)
@@ -47,7 +47,7 @@ def test_generate_base_hooks_minimal():
 
 def test_generate_base_hooks_with_yaml():
     """Test hook generation with YAML checking enabled."""
-    result = generate_base_hooks(yaml=True)
+    result = _generate_hooks("base", yaml=True)
 
     parsed = yaml.safe_load(result)
     assert isinstance(parsed, list)
@@ -59,7 +59,7 @@ def test_generate_base_hooks_with_yaml():
 
 def test_generate_base_hooks_with_json():
     """Test hook generation with JSON checking enabled."""
-    result = generate_base_hooks(json=True)
+    result = _generate_hooks("base", json=True)
 
     parsed = yaml.safe_load(result)
     assert isinstance(parsed, list)
@@ -71,7 +71,8 @@ def test_generate_base_hooks_with_json():
 
 def test_generate_base_hooks_with_all_options():
     """Test hook generation with all options enabled."""
-    result = generate_base_hooks(
+    result = _generate_hooks(
+        "base",
         yaml=True,
         json=True,
         toml=True,
@@ -108,7 +109,7 @@ def test_generate_base_hooks_with_all_options():
 
 def test_yaml_indentation():
     """Test that generated YAML has correct indentation."""
-    result = generate_base_hooks(yaml=True, json=True)
+    result = _generate_hooks("base", yaml=True, json=True)
 
     lines = result.split("\n")
 
@@ -141,7 +142,7 @@ def test_yaml_indentation():
 
 def test_no_commit_to_branch_args():
     """Test that no-commit-to-branch has correct args."""
-    result = generate_base_hooks()
+    result = _generate_hooks("base")
 
     parsed = yaml.safe_load(result)
     assert isinstance(parsed, list)

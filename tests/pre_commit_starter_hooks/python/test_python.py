@@ -8,12 +8,12 @@ import yaml
 # Add root to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
-from pre_commit_starter.render_template import generate_python_hooks
+from pre_commit_starter.hook_templates.render import _generate_hooks
 
 
 def test_generate_python_hooks_basic():
     """Test basic Python hook generation."""
-    result = generate_python_hooks()
+    result = _generate_hooks("python")
 
     # Parse as YAML list
     parsed_repos = yaml.safe_load(result)
@@ -48,7 +48,7 @@ def test_generate_python_hooks_basic():
 
 def test_generate_python_hooks_with_uv_lock():
     """Test Python hook generation with uv.lock checking."""
-    result = generate_python_hooks(uv_lock=True)
+    result = _generate_hooks("python", uv_lock=True)
 
     # Parse as YAML list
     parsed_repos = yaml.safe_load(result)
@@ -68,7 +68,7 @@ def test_generate_python_hooks_with_uv_lock():
 def test_generate_python_hooks_with_mypy_args():
     """Test Python hook generation with MyPy arguments."""
     mypy_args = ["--strict", "--ignore-missing-imports"]
-    result = generate_python_hooks(mypy_args=mypy_args)
+    result = _generate_hooks("python", mypy_args=mypy_args)
 
     # Parse as YAML list
     parsed_repos = yaml.safe_load(result)
@@ -90,7 +90,7 @@ def test_generate_python_hooks_with_mypy_args():
 
 def test_yaml_structure_and_indentation():
     """Test that generated YAML has correct structure and indentation."""
-    result = generate_python_hooks(uv_lock=True)
+    result = _generate_hooks("python", uv_lock=True)
 
     lines = result.split("\n")
 
@@ -117,7 +117,7 @@ def test_yaml_structure_and_indentation():
 
 def test_ruff_hook_args():
     """Test that ruff hook has correct args."""
-    result = generate_python_hooks()
+    result = _generate_hooks("python")
 
     # Parse as YAML list
     parsed_repos = yaml.safe_load(result)
@@ -134,4 +134,4 @@ def test_ruff_hook_args():
     )
     assert ruff_hook is not None
     assert "args" in ruff_hook
-    assert ruff_hook["args"] == ["--fix"]
+    assert ruff_hook["args"] == ["--line-length=120"]
