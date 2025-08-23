@@ -136,6 +136,4 @@ def render_config(config: PreCommitConfig) -> str:
 
     combined_content = "\n\n".join(hooks_content)
 
-    return _generate_meta_wrapper(
-        content=combined_content, python_version=config.python_version
-    )
+    return _generate_meta_wrapper(content=combined_content, python_version=config.python_version)

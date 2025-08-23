@@ -26,9 +26,7 @@ def display_detected_technologies(detected_config: PreCommitConfig) -> None:
     # Language detections
     if detected_config.python:
         version_info = (
-            f"Version: {detected_config.python_version}"
-            if detected_config.python_version
-            else "No version specified"
+            f"Version: {detected_config.python_version}" if detected_config.python_version else "No version specified"
         )
         table.add_row("Python", "✓", version_info)
 
@@ -82,29 +80,19 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
     console.print("[bold]📋 Basic Hooks[/bold]")
 
     if detected_config.yaml_check:
-        config_dict["yaml_check"] = Confirm.ask(
-            "Include YAML syntax checking?", default=detected_config.yaml_check
-        )
+        config_dict["yaml_check"] = Confirm.ask("Include YAML syntax checking?", default=detected_config.yaml_check)
 
     if detected_config.json_check:
-        config_dict["json_check"] = Confirm.ask(
-            "Include JSON syntax checking?", default=detected_config.json_check
-        )
+        config_dict["json_check"] = Confirm.ask("Include JSON syntax checking?", default=detected_config.json_check)
 
     if detected_config.toml_check:
-        config_dict["toml_check"] = Confirm.ask(
-            "Include TOML syntax checking?", default=detected_config.toml_check
-        )
+        config_dict["toml_check"] = Confirm.ask("Include TOML syntax checking?", default=detected_config.toml_check)
 
     if detected_config.xml_check:
-        config_dict["xml_check"] = Confirm.ask(
-            "Include XML syntax checking?", default=detected_config.xml_check
-        )
+        config_dict["xml_check"] = Confirm.ask("Include XML syntax checking?", default=detected_config.xml_check)
 
     # Set additional safety checks to defaults without asking
-    config_dict["case_conflict"] = (
-        True  # Always enable for cross-platform compatibility
-    )
+    config_dict["case_conflict"] = True  # Always enable for cross-platform compatibility
     config_dict["executables"] = True  # Always enable for shell script safety
 
     console.print()
@@ -112,17 +100,13 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
     # Python section
     if detected_config.python:
         console.print("[bold]🐍 Python Hooks[/bold]")
-        config_dict["python"] = Confirm.ask(
-            "Include Python hooks (Ruff + MyPy)?", default=detected_config.python
-        )
+        config_dict["python"] = Confirm.ask("Include Python hooks (Ruff + MyPy)?", default=detected_config.python)
 
         if config_dict["python"]:
             # Use detected defaults without asking additional questions
             config_dict["python_base"] = detected_config.python_base
             config_dict["uv_lock"] = detected_config.uv_lock
-            config_dict["mypy_args"] = (
-                detected_config.mypy_args
-            )  # Keep as None for default behavior
+            config_dict["mypy_args"] = detected_config.mypy_args  # Keep as None for default behavior
 
         console.print()
 
@@ -135,41 +119,29 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
         )
 
         if config_dict["js"]:
-            config_dict["typescript"] = Confirm.ask(
-                "Include TypeScript support?", default=detected_config.typescript
-            )
+            config_dict["typescript"] = Confirm.ask("Include TypeScript support?", default=detected_config.typescript)
 
-            config_dict["jsx"] = Confirm.ask(
-                "Include JSX/React support?", default=detected_config.jsx
-            )
+            config_dict["jsx"] = Confirm.ask("Include JSX/React support?", default=detected_config.jsx)
 
         console.print()
 
     # Go section
     if detected_config.go:
         console.print("[bold]🔷 Go Hooks[/bold]")
-        config_dict["go"] = Confirm.ask(
-            "Include Go hooks (golangci-lint + formatting)?", default=detected_config.go
-        )
+        config_dict["go"] = Confirm.ask("Include Go hooks (golangci-lint + formatting)?", default=detected_config.go)
 
         if config_dict["go"]:
-            config_dict["go_critic"] = Confirm.ask(
-                "Include go-critic for additional linting?", default=False
-            )
+            config_dict["go_critic"] = Confirm.ask("Include go-critic for additional linting?", default=False)
 
         console.print()
 
     # Docker section
     if detected_config.docker:
         console.print("[bold]🐳 Docker Hooks[/bold]")
-        config_dict["docker"] = Confirm.ask(
-            "Include Docker hooks?", default=detected_config.docker
-        )
+        config_dict["docker"] = Confirm.ask("Include Docker hooks?", default=detected_config.docker)
 
         if config_dict["docker"]:
-            config_dict["dockerfile_linting"] = Confirm.ask(
-                "Include Dockerfile linting (hadolint)?", default=True
-            )
+            config_dict["dockerfile_linting"] = Confirm.ask("Include Dockerfile linting (hadolint)?", default=True)
 
         console.print()
 
@@ -181,13 +153,9 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
         )
 
         if config_dict["github_actions"]:
-            config_dict["workflow_validation"] = Confirm.ask(
-                "Include workflow validation (actionlint)?", default=True
-            )
+            config_dict["workflow_validation"] = Confirm.ask("Include workflow validation (actionlint)?", default=True)
 
-            config_dict["security_scanning"] = Confirm.ask(
-                "Include security scanning for workflows?", default=False
-            )
+            config_dict["security_scanning"] = Confirm.ask("Include security scanning for workflows?", default=False)
 
         console.print()
 
@@ -200,10 +168,7 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
             )
         else:
             config_dict["python_version"] = (
-                Prompt.ask(
-                    "Python version for default_language_version (optional)", default=""
-                )
-                or None
+                Prompt.ask("Python version for default_language_version (optional)", default="") or None
             )
 
     # Create new config from the modified dict

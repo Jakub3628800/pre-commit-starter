@@ -87,9 +87,7 @@ class TestPreCommitConfigValidation:
 
     def test_model_serialization_with_aliases(self):
         """Test model serialization uses aliases when requested."""
-        config = PreCommitConfig(
-            yaml_check=True, json_check=True, python=True, python_version="python3.9"
-        )
+        config = PreCommitConfig(yaml_check=True, json_check=True, python=True, python_version="python3.9")
 
         # Serialize with aliases
         data_with_aliases = config.model_dump(by_alias=True)
@@ -127,10 +125,7 @@ class TestPreCommitConfigValidation:
         assert restored_config.python == original_config.python
         assert restored_config.python_version == original_config.python_version
         assert restored_config.yaml_check == original_config.yaml_check
-        assert (
-            restored_config.additional_dependencies
-            == original_config.additional_dependencies
-        )
+        assert restored_config.additional_dependencies == original_config.additional_dependencies
         assert restored_config.mypy_args == original_config.mypy_args
 
     def test_type_validation_boolean_fields(self):
@@ -153,9 +148,7 @@ class TestPreCommitConfigValidation:
     def test_type_validation_list_fields(self):
         """Test list fields validate correctly."""
         # Valid list inputs
-        config = PreCommitConfig(
-            additional_dependencies=["package1", "package2"], mypy_args=["--strict"]
-        )
+        config = PreCommitConfig(additional_dependencies=["package1", "package2"], mypy_args=["--strict"])
         assert config.additional_dependencies == ["package1", "package2"]
         assert config.mypy_args == ["--strict"]
 
@@ -177,9 +170,7 @@ class TestPreCommitConfigValidation:
 
     def test_model_copy(self):
         """Test model copying functionality."""
-        original = PreCommitConfig(
-            python=True, python_version="python3.9", additional_dependencies=["PyYAML"]
-        )
+        original = PreCommitConfig(python=True, python_version="python3.9", additional_dependencies=["PyYAML"])
 
         # Copy with modifications
         modified = original.model_copy(update={"python_version": "python3.10"})
