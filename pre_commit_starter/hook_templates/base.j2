@@ -36,6 +36,7 @@
     args: [--allow-missing-credentials]
   - id: no-commit-to-branch
     name: Prevent commits to main/master
+    always_run: false
     args: [--branch, main, --branch, master]
   {%- if case_conflict %}
   - id: check-case-conflict
