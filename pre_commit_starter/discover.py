@@ -411,19 +411,47 @@ def detect_python_version(path: Path) -> Optional[str]:
 
 
 def _get_used_imports(path: Path) -> set[str]:
-    """Get imports actually used in the project code."""
+    """Get imports actually used in the project code for mypy dependencies."""
     import ast
     import os
+    import tomllib
 
     used_imports = set()
+    
+    # Get project dependencies from pyproject.toml (only runtime, not dev)
+    runtime_dependencies = set()
+    pyproject_path = path / "pyproject.toml"
+    if pyproject_path.exists():
+        try:
+            with open(pyproject_path, "rb") as f:
+                data = tomllib.load(f)
+            # Get main runtime dependencies only (exclude dev dependencies for mypy)
+            if "project" in data and "dependencies" in data["project"]:
+                for dep in data["project"]["dependencies"]:
+                    # Extract package name (remove version constraints and extras)
+                    package_name = dep.split(">=")[0].split("==")[0].split("~")[0].split("[")[0].strip()
+                    runtime_dependencies.add(package_name)
+        except Exception:
+            # If we can't parse pyproject.toml, fall back to empty dependencies
+            pass
 
-    # Find all Python files in the project
+    # Common package to type stub mappings
+    type_stub_mappings = {
+        "yaml": "types-PyYAML",
+        "jinja2": "types-Jinja2",
+        "requests": "types-requests",
+        "dateutil": "types-python-dateutil",
+        "pytz": "types-pytz",
+        "six": "types-six",
+    }
+
+    # Find all Python files in the project (excluding tests and dev files)
     for root, _, files in os.walk(path):
         for file in files:
             if file.endswith(".py"):
                 file_path = os.path.join(root, file)
-                # Skip virtual environments and cache directories
-                if any(part in file_path for part in [".venv", "__pycache__", ".git"]):
+                # Skip virtual environments, cache directories, and test files
+                if any(part in file_path for part in [".venv", "__pycache__", ".git", "/tests/", "test_"]):
                     continue
 
                 try:
@@ -434,23 +462,31 @@ def _get_used_imports(path: Path) -> set[str]:
                         if isinstance(node, ast.Import):
                             for alias in node.names:
                                 import_name = alias.name.split(".")[0]
-                                # Skip standard library and local modules
-                                if not _is_standard_library(import_name) and not _is_local_module(import_name, path):
-                                    # Map yaml to PyYAML
+                                # Only include imports that are runtime dependencies
+                                if import_name in runtime_dependencies:
+                                    # Map to appropriate package names and add type stubs
                                     if import_name == "yaml":
                                         used_imports.add("PyYAML")
+                                        used_imports.add("types-PyYAML")
                                     else:
                                         used_imports.add(import_name)
+                                        # Add type stubs if available
+                                        if import_name in type_stub_mappings:
+                                            used_imports.add(type_stub_mappings[import_name])
                         elif isinstance(node, ast.ImportFrom):
                             if node.module:
                                 import_name = node.module.split(".")[0]
-                                # Skip standard library and local modules
-                                if not _is_standard_library(import_name) and not _is_local_module(import_name, path):
-                                    # Map yaml to PyYAML
+                                # Only include imports that are runtime dependencies
+                                if import_name in runtime_dependencies:
+                                    # Map to appropriate package names and add type stubs
                                     if import_name == "yaml":
                                         used_imports.add("PyYAML")
+                                        used_imports.add("types-PyYAML")
                                     else:
                                         used_imports.add(import_name)
+                                        # Add type stubs if available
+                                        if import_name in type_stub_mappings:
+                                            used_imports.add(type_stub_mappings[import_name])
                 except Exception:
                     # Skip files that can't be parsed
                     continue
