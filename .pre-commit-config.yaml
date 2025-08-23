@@ -69,6 +69,7 @@ repos:
       args: []
       additional_dependencies:
         - PyYAML
+        - hook_templates
         - jinja2
         - pydantic
         - pytest
