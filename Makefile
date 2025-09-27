@@ -1,22 +1,19 @@
 .PHONY: run test install build clean
 
-# Variables
-UV := uv
-
 run:
-	$(UV) run python -m pre_commit_starter
+	uv run python -m pre_commit_starter
 
-test: install
-	$(UV) run pytest tests/ -v
+test:
+	uv run pytest tests/ -v
 
 install:
-	$(UV) venv --python 3.12 .venv
-	$(UV) pip install -e ".[dev]"
-	$(UV) run pre-commit install
+	uv venv --python 3.12 .venv
+	uv pip install -e ".[dev]"
+	uv run pre-commit install
 	@echo "✅ Package installed with development dependencies"
 
 build:
-	$(UV) build
+	uv build
 
 clean:
 	rm -rf build/ dist/ *.egg-info .coverage htmlcov/ .pytest_cache/ .mypy_cache/ .ruff_cache/ .venv
