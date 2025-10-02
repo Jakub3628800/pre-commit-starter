@@ -8,45 +8,46 @@ from pydantic import BaseModel, Field, field_validator
 class PreCommitConfig(BaseModel):
     """Configuration for pre-commit hook generation."""
 
+    model_config = {"extra": "allow"}
+
     # Python version for default_language_version
-    python_version: Optional[str] = Field(None, alias="python_version")
+    python_version: Optional[str] = Field(default=None, alias="python_version")
 
     # Base hooks options
-    yaml_check: bool = Field(False, alias="yaml")
-    json_check: bool = Field(False, alias="json")
-    toml_check: bool = Field(False, alias="toml")
-    xml_check: bool = Field(False, alias="xml")
-    case_conflict: bool = Field(False)
-    executables: bool = Field(False)
-    symlinks: bool = Field(False)
-    python_base: bool = Field(False)
+    yaml_check: bool = Field(default=False, alias="yaml")
+    json_check: bool = Field(default=False, alias="json")
+    toml_check: bool = Field(default=False, alias="toml")
+    xml_check: bool = Field(default=False, alias="xml")
+    case_conflict: bool = Field(default=False)
+    executables: bool = Field(default=False)
+    symlinks: bool = Field(default=False)
+    python_base: bool = Field(default=False)
 
     # Python hooks options
-    python: bool = Field(False)
-    uv_lock: bool = Field(False)
-    mypy_args: Optional[list[str]] = Field(None)
-    additional_dependencies: Optional[list[str]] = Field(None)
+    python: bool = Field(default=False)
+    uv_lock: bool = Field(default=False)
+    pyrefly_args: Optional[list[str]] = Field(default=None)
 
     # Docker hooks options
-    docker: bool = Field(False)
-    dockerfile_linting: bool = Field(True)
-    dockerignore_check: bool = Field(False)
+    docker: bool = Field(default=False)
+    dockerfile_linting: bool = Field(default=True)
+    dockerignore_check: bool = Field(default=False)
 
     # GitHub Actions hooks options
-    github_actions: bool = Field(False)
-    workflow_validation: bool = Field(True)
-    security_scanning: bool = Field(False)
+    github_actions: bool = Field(default=False)
+    workflow_validation: bool = Field(default=True)
+    security_scanning: bool = Field(default=False)
 
     # JavaScript hooks options
-    js: bool = Field(False)
-    typescript: bool = Field(False)
-    jsx: bool = Field(False)
-    prettier_config: Optional[str] = Field(None)
-    eslint_config: Optional[str] = Field(None)
+    js: bool = Field(default=False)
+    typescript: bool = Field(default=False)
+    jsx: bool = Field(default=False)
+    prettier_config: Optional[str] = Field(default=None)
+    eslint_config: Optional[str] = Field(default=None)
 
     # Go hooks options
-    go: bool = Field(False)
-    go_critic: bool = Field(False)
+    go: bool = Field(default=False)
+    go_critic: bool = Field(default=False)
 
     @field_validator("python_version")
     @classmethod

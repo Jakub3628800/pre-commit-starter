@@ -7,10 +7,8 @@ from unittest.mock import patch
 from pre_commit_starter.discover import (
     detect_python_version,
     find_config_files,
-    get_required_type_stubs,
     is_ignored_by_gitignore,
     read_gitignore_patterns,
-    detect_runtime_dependencies,
     main as discover_main,
 )
 
@@ -192,90 +190,6 @@ class TestConfigFileDiscovery:
         assert "eslint_config" not in config_files
 
 
-class TestRuntimeDependencies:
-    """Test runtime dependency detection."""
-
-    def test_detect_runtime_dependencies_pyproject_only_main(self, tmp_path):
-        """Test runtime dependencies exclude optional-dependencies."""
-        pyproject_content = """
-[project]
-dependencies = ["requests", "pydantic"]
-
-[project.optional-dependencies]
-dev = ["pytest", "black"]
-"""
-        (tmp_path / "pyproject.toml").write_text(pyproject_content)
-
-        deps = detect_runtime_dependencies(tmp_path)
-
-        assert "requests" in deps
-        assert "pydantic" in deps
-        assert "pytest" not in deps
-        assert "black" not in deps
-
-    def test_detect_runtime_dependencies_requirements_txt_only(self, tmp_path):
-        """Test runtime dependencies from requirements.txt only."""
-        (tmp_path / "requirements.txt").write_text("requests>=2.0\npydantic")
-        (tmp_path / "requirements-dev.txt").write_text("pytest\nblack")
-
-        deps = detect_runtime_dependencies(tmp_path)
-
-        assert "requests" in deps
-        assert "pydantic" in deps
-        assert "pytest" not in deps
-        assert "black" not in deps
-
-    def test_detect_runtime_dependencies_file_read_error(self, tmp_path):
-        """Test runtime dependencies with file read errors."""
-        (tmp_path / "requirements.txt").write_text("requests")
-
-        with patch("builtins.open", side_effect=PermissionError):
-            deps = detect_runtime_dependencies(tmp_path)
-            assert deps == set()
-
-
-class TestTypeStubMapping:
-    """Test type stub package mapping."""
-
-    def test_get_required_type_stubs_known_packages(self):
-        """Test type stub mapping for known packages."""
-        dependencies = {"PyYAML", "requests", "jinja2"}
-
-        stubs = get_required_type_stubs(dependencies)
-
-        assert "types-PyYAML" in stubs
-        assert "types-requests" in stubs
-        assert "types-Jinja2" in stubs
-
-    def test_get_required_type_stubs_case_insensitive(self):
-        """Test type stub mapping is case insensitive."""
-        dependencies = {"pyyaml", "REQUESTS"}
-
-        stubs = get_required_type_stubs(dependencies)
-
-        # Only lowercase "requests" matches, not "pyyaml" (needs exact case "PyYAML")
-        assert "types-requests" in stubs
-        assert len(stubs) == 1
-
-    def test_get_required_type_stubs_unknown_packages(self):
-        """Test type stub mapping for unknown packages."""
-        dependencies = {"unknown-package", "custom-lib"}
-
-        stubs = get_required_type_stubs(dependencies)
-
-        assert len(stubs) == 0
-
-    def test_get_required_type_stubs_mixed(self):
-        """Test type stub mapping with mix of known and unknown packages."""
-        dependencies = {"PyYAML", "unknown-package", "requests"}
-
-        stubs = get_required_type_stubs(dependencies)
-
-        assert "types-PyYAML" in stubs
-        assert "types-requests" in stubs
-        assert len(stubs) == 2
-
-
 class TestDiscoverMainCLI:
     """Test the main CLI function."""
 
@@ -295,8 +209,8 @@ dependencies = ["requests"]
         output_data = json.loads(captured.out)
 
         assert output_data["python"] is True
-        # additional_dependencies should be None since no imports are used
-        assert output_data["additional_dependencies"] is None
+        # pyrefly_args should be None since no args are specified
+        assert output_data.get("pyrefly_args") is None
 
     def test_discover_main_yaml_output(self, tmp_path, capsys):
         """Test CLI YAML output."""

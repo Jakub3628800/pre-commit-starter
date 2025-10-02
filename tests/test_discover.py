@@ -9,7 +9,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from pre_commit_starter.discover import (
-    MYPY_PACKAGE_TO_STUB_MAP,
     detect_docker,
     detect_github_actions,
     detect_go,
@@ -24,8 +23,6 @@ from pre_commit_starter.discover import (
     detect_yaml_files,
     discover_config,
     discover_files,
-    get_required_type_stubs,
-    should_include_mypy_stubs,
 )
 
 
@@ -318,7 +315,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
-    "mypy>=1.0",
+    "pyrefly>=0.30.0",
     "types-requests",
 ]
 """)
@@ -329,7 +326,7 @@ dev = [
             "requests",
             "setuptools",
             "pytest",
-            "mypy",
+            "pyrefly",
             "types-requests",
         }
         assert dependencies == expected
@@ -351,7 +348,7 @@ setuptools~=61.0
         # Create requirements-dev.txt
         (tmp_path / "requirements-dev.txt").write_text("""
 pytest>=7.0
-mypy>=1.0
+pyrefly>=0.30.0
 types-PyYAML
 """)
 
@@ -361,7 +358,7 @@ types-PyYAML
             "requests",
             "setuptools",
             "pytest",
-            "mypy",
+            "pyrefly",
             "types-PyYAML",
         }
         assert dependencies == expected
@@ -374,93 +371,3 @@ def test_detect_project_dependencies_no_files():
 
         dependencies = detect_project_dependencies(tmp_path)
         assert dependencies == set()
-
-
-def test_get_required_type_stubs():
-    """Test getting required type stubs for dependencies."""
-    # Test with packages that have type stubs
-    dependencies = {"PyYAML", "requests", "setuptools"}
-    stubs = get_required_type_stubs(dependencies)
-    expected = {"types-PyYAML", "types-requests", "types-setuptools"}
-    assert stubs == expected
-
-    # Test with mixed case (note: lowercase "pyyaml" is not in the mapping, only "PyYAML" and "yaml")
-    dependencies = {
-        "yaml",
-        "REQUESTS",
-        "flask",
-    }  # Use "yaml" instead of "pyyaml", and "flask" (lowercase)
-    stubs = get_required_type_stubs(dependencies)
-    expected = {"types-PyYAML", "types-requests", "types-Flask"}
-    assert stubs == expected
-
-    # Test with packages that don't have type stubs
-    dependencies = {"unknown-package", "another-unknown"}
-    stubs = get_required_type_stubs(dependencies)
-    assert stubs == set()
-
-    # Test empty dependencies
-    dependencies = set()
-    stubs = get_required_type_stubs(dependencies)
-    assert stubs == set()
-
-
-def test_mypy_package_to_stub_map():
-    """Test that the MyPy package to stub mapping is valid."""
-    # Ensure the mapping exists and has expected entries
-    assert isinstance(MYPY_PACKAGE_TO_STUB_MAP, dict)
-    assert len(MYPY_PACKAGE_TO_STUB_MAP) > 0
-
-    # Test some expected mappings
-    assert MYPY_PACKAGE_TO_STUB_MAP["PyYAML"] == "types-PyYAML"
-    assert MYPY_PACKAGE_TO_STUB_MAP["yaml"] == "types-PyYAML"
-    assert MYPY_PACKAGE_TO_STUB_MAP["requests"] == "types-requests"
-    assert MYPY_PACKAGE_TO_STUB_MAP["setuptools"] == "types-setuptools"
-
-    # All values should be valid type stub package names
-    for stub_package in MYPY_PACKAGE_TO_STUB_MAP.values():
-        assert stub_package.startswith("types-") or stub_package.startswith("@types/")
-
-
-def test_should_include_mypy_stubs_with_dependencies():
-    """Test that MyPy stubs are included when there are relevant dependencies."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_path = Path(tmp_dir)
-
-        # Create pyproject.toml with dependencies that have type stubs
-        (tmp_path / "pyproject.toml").write_text("""
-[project]
-name = "test"
-dependencies = [
-    "PyYAML>=6.0",
-    "requests>=2.25.0",
-]
-""")
-
-        assert should_include_mypy_stubs(tmp_path)
-
-
-def test_should_include_mypy_stubs_without_dependencies():
-    """Test that MyPy stubs are not included when there are no relevant dependencies."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_path = Path(tmp_dir)
-
-        # Create pyproject.toml with dependencies that don't have type stubs
-        (tmp_path / "pyproject.toml").write_text("""
-[project]
-name = "test"
-dependencies = [
-    "unknown-package>=1.0",
-    "another-unknown>=2.0",
-]
-""")
-
-        assert not should_include_mypy_stubs(tmp_path)
-
-
-def test_should_include_mypy_stubs_no_files():
-    """Test that MyPy stubs are not included when there are no dependency files."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        tmp_path = Path(tmp_dir)
-
-        assert not should_include_mypy_stubs(tmp_path)

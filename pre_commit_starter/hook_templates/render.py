@@ -19,8 +19,7 @@ HOOK_PARAMS: dict[str, dict[str, type]] = {
     },
     "python": {
         "uv_lock": bool,
-        "mypy_args": str,
-        "additional_dependencies": list,
+        "pyrefly_args": str,
     },
     "docker": {
         "dockerfile_linting": bool,
@@ -99,8 +98,7 @@ def render_config(config: PreCommitConfig) -> str:
         python_content = _generate_hooks(
             "python",
             uv_lock=config.uv_lock,
-            mypy_args=config.mypy_args,
-            additional_dependencies=config.additional_dependencies,
+            pyrefly_args=config.pyrefly_args,
         )
         hooks_content.append(python_content)
 

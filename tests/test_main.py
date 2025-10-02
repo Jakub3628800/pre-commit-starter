@@ -22,7 +22,7 @@ class TestMainCLI:
     def test_main_interactive_mode_default(self, mock_print, mock_subprocess, mock_render, mock_discover):
         """Test main function in default interactive mode."""
         # Setup mocks
-        mock_config = PreCommitConfig(python=True, yaml_check=True)
+        mock_config = PreCommitConfig(python=True, yaml=True)
         mock_discover.return_value = mock_config
         mock_render.return_value = "yaml content"
 
@@ -211,7 +211,7 @@ class TestDisplayFunctions:
 
     def test_display_detected_technologies_python_only(self):
         """Test displaying Python-only configuration."""
-        config = PreCommitConfig(python=True, python_version="python3.9", yaml_check=True)
+        config = PreCommitConfig(python=True, python_version="python3.9", yaml=True)
 
         with patch("pre_commit_starter.main.console") as mock_console:
             display_detected_technologies(config)
@@ -232,10 +232,10 @@ class TestDisplayFunctions:
             go=True,
             docker=True,
             github_actions=True,
-            yaml_check=True,
-            json_check=True,
-            toml_check=True,
-            xml_check=True,
+            yaml=True,
+            json=True,
+            toml=True,
+            xml=True,
         )
 
         with patch("pre_commit_starter.main.console") as mock_console:
