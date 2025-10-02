@@ -19,8 +19,8 @@ def test_generate_python_hooks_basic():
     parsed_repos = yaml.safe_load(result)
     assert isinstance(parsed_repos, list)
 
-    # Should have ruff and mypy repos
-    min_expected_repos = 2  # ruff and mypy
+    # Should have ruff and pyrefly repos
+    min_expected_repos = 2  # ruff and pyrefly
     assert len(parsed_repos) >= min_expected_repos
 
     # Check ruff repo
@@ -33,13 +33,13 @@ def test_generate_python_hooks_basic():
     assert "ruff-format" in ruff_hook_ids
     assert "ruff" in ruff_hook_ids
 
-    # Check mypy repo
-    mypy_repo = next((repo for repo in parsed_repos if "mirrors-mypy" in repo["repo"]), None)
-    assert mypy_repo is not None
-    assert mypy_repo["repo"] == "https://github.com/pre-commit/mirrors-mypy"
+    # Check pyrefly repo
+    pyrefly_repo = next((repo for repo in parsed_repos if "pyrefly-pre-commit" in repo["repo"]), None)
+    assert pyrefly_repo is not None
+    assert pyrefly_repo["repo"] == "https://github.com/facebook/pyrefly-pre-commit"
 
-    mypy_hook_ids = [hook["id"] for hook in mypy_repo["hooks"]]
-    assert "mypy" in mypy_hook_ids
+    pyrefly_hook_ids = [hook["id"] for hook in pyrefly_repo["hooks"]]
+    assert "pyrefly-typecheck-specific-version" in pyrefly_hook_ids
 
 
 def test_generate_python_hooks_with_uv_lock():
@@ -59,23 +59,25 @@ def test_generate_python_hooks_with_uv_lock():
     assert "uv-lock" in uv_hook_ids
 
 
-def test_generate_python_hooks_with_mypy_args():
-    """Test Python hook generation with MyPy arguments."""
-    mypy_args = ["--strict", "--ignore-missing-imports"]
-    result = _generate_hooks("python", mypy_args=mypy_args)
+def test_generate_python_hooks_with_pyrefly_args():
+    """Test Python hook generation with Pyrefly arguments."""
+    pyrefly_args = ["--strict", "--ignore-missing-imports"]
+    result = _generate_hooks("python", pyrefly_args=pyrefly_args)
 
     # Parse as YAML list
     parsed_repos = yaml.safe_load(result)
     assert isinstance(parsed_repos, list)
 
-    # Find mypy repo and hook
-    mypy_repo = next((repo for repo in parsed_repos if "mirrors-mypy" in repo["repo"]), None)
-    assert mypy_repo is not None
+    # Find pyrefly repo and hook
+    pyrefly_repo = next((repo for repo in parsed_repos if "pyrefly-pre-commit" in repo["repo"]), None)
+    assert pyrefly_repo is not None
 
-    mypy_hook = next((hook for hook in mypy_repo["hooks"] if hook["id"] == "mypy"), None)
-    assert mypy_hook is not None
-    assert "args" in mypy_hook
-    assert mypy_hook["args"] == mypy_args
+    pyrefly_hook = next(
+        (hook for hook in pyrefly_repo["hooks"] if hook["id"] == "pyrefly-typecheck-specific-version"), None
+    )
+    assert pyrefly_hook is not None
+    assert "args" in pyrefly_hook
+    assert pyrefly_hook["args"] == pyrefly_args
 
 
 def test_yaml_structure_and_indentation():
@@ -86,7 +88,7 @@ def test_yaml_structure_and_indentation():
 
     # Check repo lines start correctly
     repo_lines = [line for line in lines if line.startswith("- repo:")]
-    min_expected_repos = 2  # At least ruff and mypy
+    min_expected_repos = 2  # At least ruff and pyrefly
     assert len(repo_lines) >= min_expected_repos
 
     # Check rev lines are properly indented

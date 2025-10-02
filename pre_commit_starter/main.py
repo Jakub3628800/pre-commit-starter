@@ -106,7 +106,7 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
             # Use detected defaults without asking additional questions
             config_dict["python_base"] = detected_config.python_base
             config_dict["uv_lock"] = detected_config.uv_lock
-            config_dict["mypy_args"] = detected_config.mypy_args  # Keep as None for default behavior
+            config_dict["pyrefly_args"] = detected_config.pyrefly_args  # Keep as None for default behavior
 
         console.print()
 

@@ -8,31 +8,6 @@ from typing import Optional
 
 from .config import PreCommitConfig
 
-# Mapping of package names to their type stub packages
-MYPY_PACKAGE_TO_STUB_MAP = {
-    "PyYAML": "types-PyYAML",
-    "yaml": "types-PyYAML",
-    "requests": "types-requests",
-    "setuptools": "types-setuptools",
-    "toml": "types-toml",
-    "redis": "types-redis",
-    "pillow": "types-Pillow",
-    "beautifulsoup4": "types-beautifulsoup4",
-    "chardet": "types-chardet",
-    "dateutil": "types-python-dateutil",
-    "docutils": "types-docutils",
-    "flask": "types-Flask",
-    "jinja2": "types-Jinja2",
-    "markdown": "types-Markdown",
-    "protobuf": "types-protobuf",
-    "psutil": "types-psutil",
-    "pytz": "types-pytz",
-    "six": "types-six",
-    "sqlalchemy": "types-SQLAlchemy",
-    "tabulate": "types-tabulate",
-    "urllib3": "types-urllib3",
-}
-
 
 def detect_project_dependencies(path: Path) -> set[str]:
     """Detect project dependencies from pyproject.toml, requirements.txt, etc."""
@@ -95,78 +70,6 @@ def detect_project_dependencies(path: Path) -> set[str]:
                 pass
 
     return dependencies
-
-
-def detect_runtime_dependencies(path: Path) -> set[str]:
-    """Detect only runtime dependencies (not dev dependencies) for MyPy additional_dependencies."""
-    dependencies = set()
-
-    # Check pyproject.toml - only main dependencies, not optional-dependencies
-    pyproject_file = path / "pyproject.toml"
-    if pyproject_file.exists():
-        toml_lib = None
-        try:
-            import tomllib
-
-            toml_lib = tomllib
-        except ImportError:
-            try:
-                import tomli
-
-                toml_lib = tomli
-            except ImportError:
-                pass
-
-        if toml_lib:
-            try:
-                with open(pyproject_file, "rb") as f:
-                    data = toml_lib.load(f)
-
-                # Get dependencies from project.dependencies ONLY (not optional-dependencies)
-                if "project" in data and "dependencies" in data["project"]:
-                    for dep in data["project"]["dependencies"]:
-                        # Extract package name (before ==, >=, etc.)
-                        pkg_name = dep.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].strip()
-                        dependencies.add(pkg_name)
-
-            except Exception:
-                pass
-
-    # Check only main requirements.txt (not dev requirements files)
-    req_path = path / "requirements.txt"
-    if req_path.exists():
-        try:
-            with open(req_path, encoding="utf-8") as f:
-                for raw_line in f:
-                    line = raw_line.strip()
-                    if line and not line.startswith("#") and not line.startswith("-"):
-                        pkg_name = line.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].strip()
-                        dependencies.add(pkg_name)
-        except Exception:
-            pass
-
-    return dependencies
-
-
-def get_required_type_stubs(dependencies: set[str]) -> set[str]:
-    """Get type stub packages required for the given dependencies."""
-    required_stubs = set()
-
-    for dep in dependencies:
-        # Check both the exact name and lowercase version
-        for pkg_name in [dep, dep.lower()]:
-            if pkg_name in MYPY_PACKAGE_TO_STUB_MAP:
-                required_stubs.add(MYPY_PACKAGE_TO_STUB_MAP[pkg_name])
-                break
-
-    return required_stubs
-
-
-def should_include_mypy_stubs(path: Path) -> bool:
-    """Check if project should include type stubs for MyPy."""
-    dependencies = detect_project_dependencies(path)
-    required_stubs = get_required_type_stubs(dependencies)
-    return len(required_stubs) > 0
 
 
 def read_gitignore_patterns(path: Path) -> set[str]:
@@ -239,7 +142,7 @@ def discover_files(path: Path) -> set[str]:
                 "build/",
                 "dist/",
                 ".pytest_cache/",
-                ".mypy_cache/",
+                ".pyrefly_cache/",
                 ".ruff_cache/",
             }
         )
@@ -410,151 +313,6 @@ def detect_python_version(path: Path) -> Optional[str]:
     return None
 
 
-def _get_used_imports(path: Path) -> set[str]:
-    """Get imports actually used in the project code for mypy dependencies."""
-    import ast
-    import os
-    import tomllib
-
-    used_imports = set()
-    
-    # Get project dependencies from pyproject.toml (only runtime, not dev)
-    runtime_dependencies = set()
-    pyproject_path = path / "pyproject.toml"
-    if pyproject_path.exists():
-        try:
-            with open(pyproject_path, "rb") as f:
-                data = tomllib.load(f)
-            # Get main runtime dependencies only (exclude dev dependencies for mypy)
-            if "project" in data and "dependencies" in data["project"]:
-                for dep in data["project"]["dependencies"]:
-                    # Extract package name (remove version constraints and extras)
-                    package_name = dep.split(">=")[0].split("==")[0].split("~")[0].split("[")[0].strip()
-                    runtime_dependencies.add(package_name)
-        except Exception:
-            # If we can't parse pyproject.toml, fall back to empty dependencies
-            pass
-
-    # Common package to type stub mappings
-    type_stub_mappings = {
-        "yaml": "types-PyYAML",
-        "jinja2": "types-Jinja2",
-        "requests": "types-requests",
-        "dateutil": "types-python-dateutil",
-        "pytz": "types-pytz",
-        "six": "types-six",
-    }
-
-    # Find all Python files in the project (excluding tests and dev files)
-    for root, _, files in os.walk(path):
-        for file in files:
-            if file.endswith(".py"):
-                file_path = os.path.join(root, file)
-                # Skip virtual environments, cache directories, and test files
-                if any(part in file_path for part in [".venv", "__pycache__", ".git", "/tests/", "test_"]):
-                    continue
-
-                try:
-                    with open(file_path, "r", encoding="utf-8") as f:
-                        tree = ast.parse(f.read())
-
-                    for node in ast.walk(tree):
-                        if isinstance(node, ast.Import):
-                            for alias in node.names:
-                                import_name = alias.name.split(".")[0]
-                                # Only include imports that are runtime dependencies
-                                if import_name in runtime_dependencies:
-                                    # Map to appropriate package names and add type stubs
-                                    if import_name == "yaml":
-                                        used_imports.add("PyYAML")
-                                        used_imports.add("types-PyYAML")
-                                    else:
-                                        used_imports.add(import_name)
-                                        # Add type stubs if available
-                                        if import_name in type_stub_mappings:
-                                            used_imports.add(type_stub_mappings[import_name])
-                        elif isinstance(node, ast.ImportFrom):
-                            if node.module:
-                                import_name = node.module.split(".")[0]
-                                # Only include imports that are runtime dependencies
-                                if import_name in runtime_dependencies:
-                                    # Map to appropriate package names and add type stubs
-                                    if import_name == "yaml":
-                                        used_imports.add("PyYAML")
-                                        used_imports.add("types-PyYAML")
-                                    else:
-                                        used_imports.add(import_name)
-                                        # Add type stubs if available
-                                        if import_name in type_stub_mappings:
-                                            used_imports.add(type_stub_mappings[import_name])
-                except Exception:
-                    # Skip files that can't be parsed
-                    continue
-
-    return used_imports
-
-
-def _is_standard_library(module_name: str) -> bool:
-    """Check if a module is part of the Python standard library."""
-    # Common standard library modules
-    stdlib_modules = {
-        "argparse",
-        "ast",
-        "collections",
-        "csv",
-        "datetime",
-        "email",
-        "fnmatch",
-        "functools",
-        "glob",
-        "hashlib",
-        "io",
-        "json",
-        "logging",
-        "math",
-        "os",
-        "pathlib",
-        "random",
-        "re",
-        "shutil",
-        "socket",
-        "sqlite3",
-        "ssl",
-        "stat",
-        "string",
-        "subprocess",
-        "sys",
-        "tempfile",
-        "threading",
-        "time",
-        "tkinter",
-        "tomllib",
-        "types",
-        "typing",
-        "unittest",
-        "urllib",
-        "uuid",
-        "xml",
-        "zipfile",
-    }
-
-    return module_name in stdlib_modules
-
-
-def _is_local_module(module_name: str, project_path: Path) -> bool:
-    """Check if a module is a local project module."""
-    # Local modules in this project
-    local_modules = {
-        "config",
-        "discover",
-        "main",
-        "render_template",
-        "pre_commit_starter",
-    }
-
-    return module_name in local_modules
-
-
 def find_config_files(path: Path, files: set[str]) -> dict:
     """Find configuration files for various tools."""
     config_files = {}
@@ -615,19 +373,6 @@ def discover_config(path: Path) -> PreCommitConfig:
     # Find config files
     config_files = find_config_files(path, files)
 
-    # Detect additional dependencies for MyPy if Python is detected
-    # Include only dependencies that are actually imported in the code
-    additional_deps = None
-    if has_python:
-        # Get actual imports used in the project
-        used_imports = _get_used_imports(path)
-        if used_imports:
-            # Get type stubs for used imports
-            type_stubs = get_required_type_stubs(used_imports)
-            # Combine used imports and type stubs
-            combined_deps = sorted(list(used_imports | type_stubs))
-            additional_deps = combined_deps
-
     # Build configuration
     config = PreCommitConfig(
         python_version=python_version,
@@ -640,7 +385,6 @@ def discover_config(path: Path) -> PreCommitConfig:
         python=has_python,
         python_base=has_python,  # Include Python base checks if Python detected
         uv_lock=has_python,  # Always use uv for Python projects
-        additional_dependencies=additional_deps,
         js=has_js,
         typescript=has_typescript,
         jsx=has_jsx,

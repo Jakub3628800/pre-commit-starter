@@ -14,8 +14,7 @@ class TestComplexConfigurations:
             python_version="python3.11",
             python_base=True,
             uv_lock=True,
-            additional_dependencies=["PyYAML", "pydantic"],
-            mypy_args=["--strict"],
+            pyrefly_args=["--strict"],
             js=True,
             typescript=True,
             jsx=True,
@@ -26,10 +25,10 @@ class TestComplexConfigurations:
             github_actions=True,
             workflow_validation=True,
             security_scanning=True,
-            yaml_check=True,
-            json_check=True,
-            toml_check=True,
-            xml_check=True,
+            yaml=True,
+            json=True,
+            toml=True,
+            xml=True,
             case_conflict=True,
             executables=True,
         )
@@ -40,7 +39,7 @@ class TestComplexConfigurations:
         assert "python3.11" in result
         assert "ruff" in result
         assert "repos:" in result
-        assert "mypy" in result
+        assert "pyrefly" in result
 
     def test_render_config_minimal_configuration(self):
         """Test rendering with minimal configuration."""
@@ -57,8 +56,7 @@ class TestComplexConfigurations:
         config = PreCommitConfig(
             python=True,
             python_version="python3.9",
-            additional_dependencies=["types-PyYAML", "types-requests", "pydantic"],
-            mypy_args=["--strict", "--ignore-missing-imports"],
+            pyrefly_args=["--strict", "--ignore-missing-imports"],
         )
 
         result = render_config(config)
@@ -68,7 +66,7 @@ class TestComplexConfigurations:
 
     def test_render_config_structure_validation(self):
         """Test that rendered config has proper YAML structure."""
-        config = PreCommitConfig(python=True, yaml_check=True, python_version="python3.12")
+        config = PreCommitConfig(python=True, yaml=True, python_version="python3.12")
         result = render_config(config)
 
         # Should have proper YAML structure
