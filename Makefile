@@ -7,7 +7,6 @@ test:
 	uv run pytest tests/ -v
 
 install:
-	uv pip install -e .
 	uv pip install -e ".[dev]"
 	uv run pre-commit install
 	@echo "✅ Package installed with development dependencies"
