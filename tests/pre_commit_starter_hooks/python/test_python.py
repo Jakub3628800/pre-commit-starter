@@ -73,7 +73,8 @@ def test_generate_python_hooks_with_pyrefly_args():
     assert pyrefly_repo is not None
 
     pyrefly_hook = next(
-        (hook for hook in pyrefly_repo["hooks"] if hook["id"] == "pyrefly-typecheck-specific-version"), None
+        (hook for hook in pyrefly_repo["hooks"] if hook["id"] == "pyrefly-typecheck-specific-version"),
+        None,
     )
     assert pyrefly_hook is not None
     assert "args" in pyrefly_hook

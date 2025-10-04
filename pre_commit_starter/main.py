@@ -176,20 +176,20 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
 
 
 def main() -> None:
-    """Main interactive function."""
+    """Main function to generate pre-commit configuration."""
     parser = argparse.ArgumentParser(description="Generate pre-commit configuration")
     parser.add_argument(
-        "-y",
-        "--yes",
+        "-i",
+        "--interactive",
         action="store_true",
-        help="Auto-accept all defaults and run pre-commit",
+        help="Enable interactive mode for customizing configuration",
     )
     args = parser.parse_args()
 
     # Detect current project
     current_path = Path.cwd()
 
-    if not args.yes:
+    if args.interactive:
         console.print(
             Panel.fit(
                 "🚀 Pre-commit Starter\n\nGenerate pre-commit configuration for your project",
@@ -201,13 +201,13 @@ def main() -> None:
         console.print()
 
     # Auto-detect configuration
-    if not args.yes:
+    if args.interactive:
         with console.status("🔍 Detecting technologies..."):
             detected_config = discover_config(current_path)
     else:
         detected_config = discover_config(current_path)
 
-    if not args.yes:
+    if args.interactive:
         # Display detected technologies
         display_detected_technologies(detected_config)
 
@@ -222,12 +222,14 @@ def main() -> None:
         # Generate the configuration
         with console.status("🔨 Generating pre-commit configuration..."):
             pre_commit_yaml = render_config(final_config)
+
+        # Output the configuration to stdout
+        print(pre_commit_yaml)
     else:
-        # Auto-accept mode
+        # Default auto-generate mode
         final_config = detected_config
         pre_commit_yaml = render_config(final_config)
 
-    if args.yes:
         # Save configuration and run pre-commit
         config_file = current_path / ".pre-commit-config.yaml"
         config_file.write_text(pre_commit_yaml)
@@ -260,9 +262,6 @@ def main() -> None:
             console.print(f"❌ Failed to setup pre-commit: {e}")
         except FileNotFoundError:
             console.print("❌ pre-commit not found in PATH")
-    else:
-        # Output the configuration to stdout
-        print(pre_commit_yaml)
 
 
 if __name__ == "__main__":
