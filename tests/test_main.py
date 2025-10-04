@@ -18,36 +18,16 @@ class TestMainCLI:
     @patch("pre_commit_starter.main.discover_config")
     @patch("pre_commit_starter.main.render_config")
     @patch("subprocess.run")
-    @patch("builtins.print")
-    def test_main_interactive_mode_default(self, mock_print, mock_subprocess, mock_render, mock_discover):
-        """Test main function in default interactive mode."""
+    @patch("pathlib.Path.write_text")
+    def test_main_auto_generate_mode_default(self, mock_write, mock_subprocess, mock_render, mock_discover):
+        """Test main function in default auto-generate mode."""
         # Setup mocks
         mock_config = PreCommitConfig(python=True, yaml=True)
         mock_discover.return_value = mock_config
         mock_render.return_value = "yaml content"
-
-        with patch("sys.argv", ["pre-commit-starter"]):
-            with patch("pre_commit_starter.main.Confirm.ask", return_value=False):
-                main()
-
-        mock_discover.assert_called_once()
-        mock_render.assert_called_once()
-        mock_print.assert_called_with("yaml content")
-        mock_subprocess.assert_not_called()
-
-    @patch("pre_commit_starter.main.discover_config")
-    @patch("pre_commit_starter.main.render_config")
-    @patch("subprocess.run")
-    @patch("pathlib.Path.write_text")
-    def test_main_auto_accept_mode(self, mock_write, mock_subprocess, mock_render, mock_discover):
-        """Test main function with -y flag."""
-        # Setup mocks
-        mock_config = PreCommitConfig(python=True)
-        mock_discover.return_value = mock_config
-        mock_render.return_value = "yaml content"
         mock_subprocess.return_value.returncode = 0
 
-        with patch("sys.argv", ["pre-commit-starter", "-y"]):
+        with patch("sys.argv", ["pre-commit-starter"]):
             with patch("pre_commit_starter.main.console"):
                 main()
 
@@ -57,6 +37,26 @@ class TestMainCLI:
         assert mock_subprocess.call_count == 2  # install and run
 
     @patch("pre_commit_starter.main.discover_config")
+    @patch("pre_commit_starter.main.render_config")
+    @patch("subprocess.run")
+    @patch("builtins.print")
+    def test_main_interactive_mode(self, mock_print, mock_subprocess, mock_render, mock_discover):
+        """Test main function with -i flag for interactive mode."""
+        # Setup mocks
+        mock_config = PreCommitConfig(python=True)
+        mock_discover.return_value = mock_config
+        mock_render.return_value = "yaml content"
+
+        with patch("sys.argv", ["pre-commit-starter", "-i"]):
+            with patch("pre_commit_starter.main.Confirm.ask", return_value=False):
+                main()
+
+        mock_discover.assert_called_once()
+        mock_render.assert_called_once()
+        mock_print.assert_called_with("yaml content")
+        mock_subprocess.assert_not_called()
+
+    @patch("pre_commit_starter.main.discover_config")
     @patch("subprocess.run")
     def test_main_subprocess_called_process_error(self, mock_subprocess, mock_discover):
         """Test main function handles subprocess.CalledProcessError."""
@@ -64,7 +64,7 @@ class TestMainCLI:
         mock_discover.return_value = mock_config
         mock_subprocess.side_effect = subprocess.CalledProcessError(1, "cmd")
 
-        with patch("sys.argv", ["pre-commit-starter", "-y"]):
+        with patch("sys.argv", ["pre-commit-starter"]):
             with patch("pre_commit_starter.main.console") as mock_console:
                 with patch("pathlib.Path.write_text"):
                     main()
@@ -81,7 +81,7 @@ class TestMainCLI:
         mock_discover.return_value = mock_config
         mock_subprocess.side_effect = FileNotFoundError()
 
-        with patch("sys.argv", ["pre-commit-starter", "-y"]):
+        with patch("sys.argv", ["pre-commit-starter"]):
             with patch("pre_commit_starter.main.console") as mock_console:
                 with patch("pathlib.Path.write_text"):
                     main()
@@ -105,7 +105,7 @@ class TestMainCLI:
 
         mock_subprocess.side_effect = [install_result, run_result]
 
-        with patch("sys.argv", ["pre-commit-starter", "-y"]):
+        with patch("sys.argv", ["pre-commit-starter"]):
             with patch("pre_commit_starter.main.console") as mock_console:
                 with patch("pathlib.Path.write_text"):
                     main()
@@ -269,7 +269,7 @@ class TestIntegrationScenarios:
     @patch("pre_commit_starter.main.ask_user_preferences")
     @patch("pre_commit_starter.main.render_config")
     def test_main_user_customization_flow(self, mock_render, mock_ask, mock_discover):
-        """Test main function when user wants to customize."""
+        """Test main function when user wants to customize in interactive mode."""
         detected_config = PreCommitConfig(python=True)
         custom_config = PreCommitConfig(python=True, js=True)
 
@@ -277,7 +277,7 @@ class TestIntegrationScenarios:
         mock_ask.return_value = custom_config
         mock_render.return_value = "custom yaml"
 
-        with patch("sys.argv", ["pre-commit-starter"]):
+        with patch("sys.argv", ["pre-commit-starter", "-i"]):
             with patch("pre_commit_starter.main.Confirm.ask", return_value=True):
                 with patch("builtins.print") as mock_print:
                     main()
@@ -288,13 +288,12 @@ class TestIntegrationScenarios:
 
     def test_main_argument_parsing(self):
         """Test argument parsing functionality."""
-        with patch("sys.argv", ["pre-commit-starter", "--yes"]):
+        with patch("sys.argv", ["pre-commit-starter", "--interactive"]):
             with patch("pre_commit_starter.main.discover_config"):
                 with patch("pre_commit_starter.main.render_config"):
-                    with patch("subprocess.run"):
-                        with patch("pathlib.Path.write_text"):
-                            with patch("pre_commit_starter.main.console"):
-                                main()
+                    with patch("pre_commit_starter.main.Confirm.ask", return_value=False):
+                        with patch("builtins.print"):
+                            main()
 
         # Should not raise any argument parsing errors
 
@@ -303,7 +302,7 @@ class TestIntegrationScenarios:
         with patch("pathlib.Path.cwd") as mock_cwd:
             mock_cwd.return_value = Path("/test/path")
 
-            with patch("sys.argv", ["pre-commit-starter", "-y"]):
+            with patch("sys.argv", ["pre-commit-starter"]):
                 with patch("pre_commit_starter.main.discover_config") as mock_discover:
                     mock_discover.return_value = PreCommitConfig()
                     with patch("pre_commit_starter.main.render_config"):
