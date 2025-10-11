@@ -2,7 +2,7 @@
 # pre-commit-config.yaml created with https://github.com/Jakub3628800/pre-commit-template
 # ===============================================================================
 default_language_version:
-  python: python3.12
+  python: python3.14
 repos:
   # =====================
   # Base hooks

@@ -66,7 +66,7 @@ class TestComplexConfigurations:
 
     def test_render_config_structure_validation(self):
         """Test that rendered config has proper YAML structure."""
-        config = PreCommitConfig(python=True, yaml=True, python_version="python3.12")
+        config = PreCommitConfig(python=True, yaml=True, python_version="python3.14")
         result = render_config(config)
 
         # Should have proper YAML structure

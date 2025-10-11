@@ -292,7 +292,7 @@ def detect_python_version(path: Path) -> Optional[str]:
             project = data.get("project", {})
             requires_python = project.get("requires-python")
             if requires_python and isinstance(requires_python, str):
-                # Extract version like ">=3.9" -> "python3.9"
+                # Extract version like ">=3.14" -> "python3.14"
                 if ">=" in requires_python:
                     version = requires_python.split(">=")[1].strip()
                     return f"python{version}"
