@@ -40,7 +40,7 @@ This is a Python CLI tool that auto-generates `.pre-commit-config.yaml` files by
 ## Key Implementation Details
 
 - Uses uv for package management and virtual environments
-- Supports Python 3.9+ with setuptools build system
+- Supports Python 3.14+ with setuptools build system
 - Technologies detected: Python, JavaScript, TypeScript, Go, Rust, HTML, CSS, YAML, Docker
 - Hook priority system: Security (1) → Basic Checks (2) → Language-Specific (3-4) → Framework-Specific (11) → Performance/Testing (12-14)
 - Test fixtures in `src/tests/fixtures/sample_repos/` with expected configs in `src/tests/expected_configs/`
