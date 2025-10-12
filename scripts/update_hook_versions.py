@@ -68,7 +68,7 @@ class TemplateUpdater:
     def cleanup_temp_directory(self):
         """Remove the temporary directory."""
         if self.temp_dir and self.temp_dir.exists():
-            shutil.rmtree(self.temp_dir)
+            shutil.rmtree(self.temp_dir)  # type: ignore[deprecated]
             print(f"Cleaned up temporary directory: {self.temp_dir}")
 
     def extract_original_revisions(self) -> Dict[str, str]:
@@ -137,7 +137,7 @@ class TemplateUpdater:
         for template_file in template_files:
             template = env.get_template(template_file.name)
             content = template.render(context)
-            all_content.append(content)
+            all_content.append(content)  # type: ignore[arg-type]
             print(f"Rendered {template_file.name}")
 
         # Combine all content
@@ -223,7 +223,7 @@ class TemplateUpdater:
                     # Parse the output for this specific repo
                     if "updating" in result.stdout:
                         print("✓ Updated")
-                        all_updates.append(result.stdout)
+                        all_updates.append(result.stdout)  # type: ignore[arg-type]
                     else:
                         print("✓ Already up to date")
                 else:
@@ -333,7 +333,7 @@ class TemplateUpdater:
 
         print("\n" + "=" * 70)
 
-    def run(self) -> bool:
+    def run(self) -> bool:  # type: ignore[return]
         """Execute the complete update process."""
         try:
             # Setup
