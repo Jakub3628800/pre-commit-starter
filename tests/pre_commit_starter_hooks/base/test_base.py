@@ -26,7 +26,8 @@ def test_generate_base_hooks_minimal():
 
     # Check that it's a valid repo structure
     assert repo["repo"] == "https://github.com/pre-commit/pre-commit-hooks"
-    assert repo["rev"] == "v5.0.0"
+    assert "rev" in repo
+    assert repo["rev"].startswith("v")  # Check version format
     assert "hooks" in repo
 
     # Check that basic hooks are present

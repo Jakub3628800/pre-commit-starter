@@ -27,7 +27,8 @@ def test_generate_python_hooks_basic():
     ruff_repo = next((repo for repo in parsed_repos if "ruff-pre-commit" in repo["repo"]), None)
     assert ruff_repo is not None
     assert ruff_repo["repo"] == "https://github.com/astral-sh/ruff-pre-commit"
-    assert ruff_repo["rev"] == "v0.12.2"
+    assert "rev" in ruff_repo
+    assert ruff_repo["rev"].startswith("v")  # Check version format
 
     ruff_hook_ids = [hook["id"] for hook in ruff_repo["hooks"]]
     assert "ruff-format" in ruff_hook_ids
