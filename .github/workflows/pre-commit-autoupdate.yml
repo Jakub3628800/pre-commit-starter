@@ -25,7 +25,7 @@ jobs:
       - name: Update hook versions in templates
         run: |
           echo "🔄 Updating hook versions in templates..."
-          uv run python scripts/update_hook_versions.py
+          uv run --with pre-commit python scripts/update_hook_versions.py
 
       - name: Regenerate .pre-commit-config.yaml from templates
         run: |
