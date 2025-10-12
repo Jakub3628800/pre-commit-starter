@@ -1,7 +1,17 @@
-.PHONY: run test install build clean run-precommit coverage test-all
+.PHONY: run test install build clean run-precommit coverage test-all update-templates generate-config update-hooks
 
 run:
 	uv run python -m pre_commit_starter
+
+update-templates:  ## Update hook versions in templates
+	uv run python scripts/update_hook_versions.py
+
+generate-config:  ## Generate .pre-commit-config.yaml from templates
+	uv run python -m pre_commit_starter
+
+update-hooks:  ## Update templates and regenerate config
+	@$(MAKE) update-templates
+	@$(MAKE) generate-config
 
 test:
 	uv run --extra dev pytest tests/ -v

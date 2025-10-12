@@ -1,10 +1,9 @@
-name: Auto-Update pre-commit Hooks
+name: Auto-Update Hook Templates
 
 on:
   schedule:
-    # Runs daily at midnight UTC
-    - cron: "0 0 * * *"
-  workflow_dispatch:  # Optional: Allow manual triggering
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -17,32 +16,45 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: "3.14"
+          enable-cache: true
 
-      - name: Install pre-commit
-        run: pip install pre-commit
+      - name: Update hook versions in templates
+        run: uv run --with pre-commit python scripts/update_hook_versions.py
 
-      - name: Update hooks
-        run: pre-commit autoupdate
+      - name: Regenerate .pre-commit-config.yaml from templates
+        run: uv run python -m pre_commit_starter
 
       - name: Check for changes
         id: changes
         run: |
-          git add .pre-commit-config.yaml
-          git diff --staged --quiet || echo "changed=true" >> "$GITHUB_OUTPUT"
+          git add pre_commit_starter/hook_templates/ .pre-commit-config.yaml
+          if ! git diff --staged --quiet; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git diff --staged --stat
+          fi
 
       - name: Create Pull Request
         if: steps.changes.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
-          title: "chore: Pre-commit auto-update"
-          body: "Automated update of pre-commit hooks"
-          branch: "pre-commit-autoupdate"
+          title: "Update pre-commit hook versions"
+          body: |
+            Automated update of pre-commit hook versions.
+
+            ## Changes
+            - Updated hook versions in `pre_commit_starter/hook_templates/`
+            - Regenerated `.pre-commit-config.yaml` from updated templates
+
+            ## Review
+            - [ ] Verify hook version updates
+            - [ ] Run tests
+          branch: "update-hook-versions"
           base: "master"
-          labels: dependencies,github_actions
+          labels: dependencies,automation
+          commit-message: "Update pre-commit hook versions"
           sign-commits: true
           assignees: Jakub3628800
           reviewers: Jakub3628800
