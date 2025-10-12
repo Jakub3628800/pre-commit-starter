@@ -22,16 +22,6 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.14"
-
-      - name: Install dependencies
-        run: |
-          uv pip install --system -e .
-          uv pip install --system pre-commit pyyaml jinja2
-
       - name: Update hook versions in templates
         run: |
           echo "🔄 Updating hook versions in templates..."
