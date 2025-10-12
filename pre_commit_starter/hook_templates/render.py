@@ -77,7 +77,7 @@ def render_config(config: PreCommitConfig) -> str:
         config: Pre-commit configuration object
 
     Returns:
-        Complete pre-commit configuration as YAML string
+        Complete pre-commit configuration as YAML string with trailing newline
     """
     hooks_content = []
 
@@ -134,4 +134,8 @@ def render_config(config: PreCommitConfig) -> str:
 
     combined_content = "\n\n".join(hooks_content)
 
-    return _generate_meta_wrapper(content=combined_content, python_version=config.python_version)
+    result = _generate_meta_wrapper(content=combined_content, python_version=config.python_version)
+    # Ensure trailing newline
+    if not result.endswith("\n"):
+        result += "\n"
+    return result
