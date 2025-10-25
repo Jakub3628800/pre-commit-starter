@@ -69,9 +69,7 @@ class TestMainCLI:
                 with patch("pathlib.Path.write_text"):
                     main()
 
-        mock_console.print.assert_any_call(
-            "❌ Failed to setup pre-commit: Command 'cmd' returned non-zero exit status 1."
-        )
+        mock_console.print.assert_any_call("Failed to setup pre-commit: Command 'cmd' returned non-zero exit status 1.")
 
     @patch("pre_commit_starter.main.discover_config")
     @patch("subprocess.run")
@@ -86,7 +84,7 @@ class TestMainCLI:
                 with patch("pathlib.Path.write_text"):
                     main()
 
-        mock_console.print.assert_any_call("❌ pre-commit not found in PATH")
+        mock_console.print.assert_any_call("pre-commit not found in PATH")
 
     @patch("pre_commit_starter.main.discover_config")
     @patch("subprocess.run")
@@ -110,7 +108,7 @@ class TestMainCLI:
                 with patch("pathlib.Path.write_text"):
                     main()
 
-        mock_console.print.assert_any_call("⚠️  Pre-commit setup complete but some hooks failed:")
+        mock_console.print.assert_any_call("Pre-commit setup complete but some hooks failed:")
         mock_console.print.assert_any_call("Hook failed output")
         mock_console.print.assert_any_call("Error details")
 

@@ -5,40 +5,9 @@ from jinja2 import Environment, FileSystemLoader
 
 from pre_commit_starter.config import PreCommitConfig
 
-
-HOOK_PARAMS: dict[str, dict[str, type]] = {
-    "base": {
-        "yaml": bool,
-        "json": bool,
-        "toml": bool,
-        "xml": bool,
-        "case_conflict": bool,
-        "executables": bool,
-        "symlinks": bool,
-        "python": bool,
-    },
-    "python": {
-        "uv_lock": bool,
-        "pyrefly_args": str,
-    },
-    "docker": {
-        "dockerfile_linting": bool,
-        "dockerignore_check": bool,
-    },
-    "js": {
-        "typescript": bool,
-        "jsx": bool,
-        "prettier_config": bool,
-        "eslint_config": bool,
-    },
-    "go": {
-        "go_critic": bool,
-    },
-    "github_actions": {
-        "workflow_validation": bool,
-        "security_scanning": bool,
-    },
-}
+# Initialize Jinja2 environment once at module level
+TEMPLATES_DIR = Path(__file__).parent
+JINJA_ENV = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
 
 
 def _generate_hooks(hook_type: str, **kwargs: Any) -> str:
@@ -54,19 +23,12 @@ def _generate_hooks(hook_type: str, **kwargs: Any) -> str:
     if hook_type not in template_mapping:
         raise ValueError(f"Unsupported hook type: {hook_type}")
 
-    templates_dir = Path(__file__).parent
-
-    env = Environment(loader=FileSystemLoader(templates_dir))
-    template = env.get_template(template_mapping[hook_type])
-
+    template = JINJA_ENV.get_template(template_mapping[hook_type])
     return template.render(**kwargs)
 
 
 def _generate_meta_wrapper(content: str, python_version: Optional[str] = None) -> str:
-    templates_dir = Path(__file__).parent
-    env = Environment(loader=FileSystemLoader(templates_dir))
-    template = env.get_template("meta.j2")
-
+    template = JINJA_ENV.get_template("meta.j2")
     return template.render(content=content, python_version=python_version)
 
 
@@ -81,6 +43,7 @@ def render_config(config: PreCommitConfig) -> str:
     """
     hooks_content = []
 
+    # Always add base hooks
     base_content = _generate_hooks(
         "base",
         yaml=config.yaml_check,
@@ -94,43 +57,54 @@ def render_config(config: PreCommitConfig) -> str:
     )
     hooks_content.append(base_content)
 
-    if config.python:
-        python_content = _generate_hooks(
+    # Data-driven hook generation
+    optional_hooks: list[tuple[str, bool, dict[str, Any]]] = [
+        (
             "python",
-            uv_lock=config.uv_lock,
-            pyrefly_args=config.pyrefly_args,
-        )
-        hooks_content.append(python_content)
-
-    if config.docker:
-        docker_content = _generate_hooks(
+            config.python,
+            {
+                "uv_lock": config.uv_lock,
+                "pyrefly_args": config.pyrefly_args,
+            },
+        ),
+        (
             "docker",
-            dockerfile_linting=config.dockerfile_linting,
-            dockerignore_check=config.dockerignore_check,
-        )
-        hooks_content.append(docker_content)
-
-    if config.github_actions:
-        github_actions_content = _generate_hooks(
+            config.docker,
+            {
+                "dockerfile_linting": config.dockerfile_linting,
+                "dockerignore_check": config.dockerignore_check,
+            },
+        ),
+        (
             "github_actions",
-            workflow_validation=config.workflow_validation,
-            security_scanning=config.security_scanning,
-        )
-        hooks_content.append(github_actions_content)
-
-    if config.js:
-        js_content = _generate_hooks(
+            config.github_actions,
+            {
+                "workflow_validation": config.workflow_validation,
+                "security_scanning": config.security_scanning,
+            },
+        ),
+        (
             "js",
-            typescript=config.typescript,
-            jsx=config.jsx,
-            prettier_config=config.prettier_config,
-            eslint_config=config.eslint_config,
-        )
-        hooks_content.append(js_content)
+            config.js,
+            {
+                "typescript": config.typescript,
+                "jsx": config.jsx,
+                "prettier_config": config.prettier_config,
+                "eslint_config": config.eslint_config,
+            },
+        ),
+        (
+            "go",
+            config.go,
+            {
+                "go_critic": config.go_critic,
+            },
+        ),
+    ]
 
-    if config.go:
-        go_content = _generate_hooks("go", go_critic=config.go_critic)
-        hooks_content.append(go_content)
+    for hook_type, enabled, params in optional_hooks:
+        if enabled:
+            hooks_content.append(_generate_hooks(hook_type, **params))
 
     combined_content = "\n\n".join(hooks_content)
 
