@@ -3,10 +3,16 @@
 import argparse
 import fnmatch
 import json
+import re
 from pathlib import Path
 from typing import Optional
 
 from .config import PreCommitConfig
+
+
+def extract_package_name(dep: str) -> str:
+    """Extract package name from dependency string (removes version specifiers)."""
+    return re.split(r"[>=~<]", dep)[0].strip()
 
 
 def detect_project_dependencies(path: Path) -> set[str]:
@@ -37,16 +43,13 @@ def detect_project_dependencies(path: Path) -> set[str]:
                 # Get dependencies from project.dependencies
                 if "project" in data and "dependencies" in data["project"]:
                     for dep in data["project"]["dependencies"]:
-                        # Extract package name (before ==, >=, etc.)
-                        pkg_name = dep.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].strip()
-                        dependencies.add(pkg_name)
+                        dependencies.add(extract_package_name(dep))
 
                 # Get dev dependencies
                 if "project" in data and "optional-dependencies" in data["project"]:
                     for group in data["project"]["optional-dependencies"].values():
                         for dep in group:
-                            pkg_name = dep.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].strip()
-                            dependencies.add(pkg_name)
+                            dependencies.add(extract_package_name(dep))
 
             except Exception:
                 pass
@@ -64,8 +67,7 @@ def detect_project_dependencies(path: Path) -> set[str]:
                     for raw_line in f:
                         line = raw_line.strip()
                         if line and not line.startswith("#") and not line.startswith("-"):
-                            pkg_name = line.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].strip()
-                            dependencies.add(pkg_name)
+                            dependencies.add(extract_package_name(line))
             except Exception:
                 pass
 
@@ -256,25 +258,29 @@ def detect_github_actions(files: set[str], path: Path) -> bool:
     return False
 
 
+def has_file_type(files: set[str], indicators: set[str]) -> bool:
+    """Check if project has files matching any of the given indicators."""
+    return bool(indicators & files)
+
+
 def detect_yaml_files(files: set[str]) -> bool:
     """Detect if project has YAML files."""
-    yaml_indicators = {".yml", ".yaml", "docker-compose.yml", "docker-compose.yaml"}
-    return bool(yaml_indicators & files)
+    return has_file_type(files, {".yml", ".yaml", "docker-compose.yml", "docker-compose.yaml"})
 
 
 def detect_json_files(files: set[str]) -> bool:
     """Detect if project has JSON files."""
-    return ".json" in files
+    return has_file_type(files, {".json"})
 
 
 def detect_toml_files(files: set[str]) -> bool:
     """Detect if project has TOML files."""
-    return ".toml" in files or "pyproject.toml" in files
+    return has_file_type(files, {".toml", "pyproject.toml"})
 
 
 def detect_xml_files(files: set[str]) -> bool:
     """Detect if project has XML files."""
-    return ".xml" in files
+    return has_file_type(files, {".xml"})
 
 
 def detect_python_version(path: Path) -> Optional[str]:
@@ -313,37 +319,47 @@ def detect_python_version(path: Path) -> Optional[str]:
     return None
 
 
+def find_config_file(files: set[str], configs: list[str]) -> Optional[str]:
+    """Find the first matching config file from a list."""
+    for config in configs:
+        if config.lower() in files:
+            return config
+    return None
+
+
 def find_config_files(path: Path, files: set[str]) -> dict:
     """Find configuration files for various tools."""
     config_files = {}
 
     # Prettier configs
-    prettier_configs = [
-        ".prettierrc",
-        ".prettierrc.json",
-        ".prettierrc.yml",
-        ".prettierrc.yaml",
-        ".prettierrc.js",
-        "prettier.config.js",
-    ]
-    for config in prettier_configs:
-        if config.lower() in files:
-            config_files["prettier_config"] = config
-            break
+    prettier_config = find_config_file(
+        files,
+        [
+            ".prettierrc",
+            ".prettierrc.json",
+            ".prettierrc.yml",
+            ".prettierrc.yaml",
+            ".prettierrc.js",
+            "prettier.config.js",
+        ],
+    )
+    if prettier_config:
+        config_files["prettier_config"] = prettier_config
 
     # ESLint configs
-    eslint_configs = [
-        ".eslintrc",
-        ".eslintrc.json",
-        ".eslintrc.yml",
-        ".eslintrc.yaml",
-        ".eslintrc.js",
-        "eslint.config.js",
-    ]
-    for config in eslint_configs:
-        if config.lower() in files:
-            config_files["eslint_config"] = config
-            break
+    eslint_config = find_config_file(
+        files,
+        [
+            ".eslintrc",
+            ".eslintrc.json",
+            ".eslintrc.yml",
+            ".eslintrc.yaml",
+            ".eslintrc.js",
+            "eslint.config.js",
+        ],
+    )
+    if eslint_config:
+        config_files["eslint_config"] = eslint_config
 
     return config_files
 

@@ -2,6 +2,7 @@
 
 import argparse
 import subprocess
+from contextlib import nullcontext
 from pathlib import Path
 
 from rich.console import Console
@@ -18,7 +19,7 @@ console = Console()
 
 def display_detected_technologies(detected_config: PreCommitConfig) -> None:
     """Display detected technologies in a nice table."""
-    table = Table(title="🔍 Detected Technologies")
+    table = Table(title="Detected Technologies")
     table.add_column("Technology", style="cyan")
     table.add_column("Detected", style="green")
     table.add_column("Details", style="dim")
@@ -28,7 +29,7 @@ def display_detected_technologies(detected_config: PreCommitConfig) -> None:
         version_info = (
             f"Version: {detected_config.python_version}" if detected_config.python_version else "No version specified"
         )
-        table.add_row("Python", "✓", version_info)
+        table.add_row("Python", "Yes", version_info)
 
     if detected_config.js:
         details = []
@@ -37,17 +38,17 @@ def display_detected_technologies(detected_config: PreCommitConfig) -> None:
         if detected_config.jsx:
             details.append("JSX/React")
         detail_str = ", ".join(details) if details else "Basic JavaScript"
-        table.add_row("JavaScript", "✓", detail_str)
+        table.add_row("JavaScript", "Yes", detail_str)
 
     if detected_config.go:
-        table.add_row("Go", "✓", "")
+        table.add_row("Go", "Yes", "")
 
     # Infrastructure
     if detected_config.docker:
-        table.add_row("Docker", "✓", "")
+        table.add_row("Docker", "Yes", "")
 
     if detected_config.github_actions:
-        table.add_row("GitHub Actions", "✓", "")
+        table.add_row("GitHub Actions", "Yes", "")
 
     # File types
     file_types = []
@@ -61,7 +62,7 @@ def display_detected_technologies(detected_config: PreCommitConfig) -> None:
         file_types.append("XML")
 
     if file_types:
-        table.add_row("File Types", "✓", ", ".join(file_types))
+        table.add_row("File Types", "Yes", ", ".join(file_types))
 
     console.print(table)
     console.print()
@@ -69,7 +70,7 @@ def display_detected_technologies(detected_config: PreCommitConfig) -> None:
 
 def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
     """Ask user for their preferences, using detected config as defaults."""
-    console.print(Panel.fit("🛠️  Configure Pre-commit Hooks", style="bold blue"))
+    console.print(Panel.fit("Configure Pre-commit Hooks", style="bold blue"))
     console.print("We'll ask you a few questions to customize your configuration.")
     console.print("Detected defaults are shown - just press Enter to accept them.\n")
 
@@ -77,7 +78,7 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
     config_dict = detected_config.model_dump()
 
     # Base hooks section
-    console.print("[bold]📋 Basic Hooks[/bold]")
+    console.print("[bold]Basic Hooks[/bold]")
 
     if detected_config.yaml_check:
         config_dict["yaml_check"] = Confirm.ask("Include YAML syntax checking?", default=detected_config.yaml_check)
@@ -99,7 +100,7 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
 
     # Python section
     if detected_config.python:
-        console.print("[bold]🐍 Python Hooks[/bold]")
+        console.print("[bold]Python Hooks[/bold]")
         config_dict["python"] = Confirm.ask("Include Python hooks (Ruff + MyPy)?", default=detected_config.python)
 
         if config_dict["python"]:
@@ -112,7 +113,7 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
 
     # JavaScript section
     if detected_config.js:
-        console.print("[bold]🌐 JavaScript/TypeScript Hooks[/bold]")
+        console.print("[bold]JavaScript/TypeScript Hooks[/bold]")
         config_dict["js"] = Confirm.ask(
             "Include JavaScript/TypeScript hooks (Prettier + ESLint)?",
             default=detected_config.js,
@@ -127,7 +128,7 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
 
     # Go section
     if detected_config.go:
-        console.print("[bold]🔷 Go Hooks[/bold]")
+        console.print("[bold]Go Hooks[/bold]")
         config_dict["go"] = Confirm.ask("Include Go hooks (golangci-lint + formatting)?", default=detected_config.go)
 
         if config_dict["go"]:
@@ -137,7 +138,7 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
 
     # Docker section
     if detected_config.docker:
-        console.print("[bold]🐳 Docker Hooks[/bold]")
+        console.print("[bold]Docker Hooks[/bold]")
         config_dict["docker"] = Confirm.ask("Include Docker hooks?", default=detected_config.docker)
 
         if config_dict["docker"]:
@@ -147,7 +148,7 @@ def ask_user_preferences(detected_config: PreCommitConfig) -> PreCommitConfig:
 
     # GitHub Actions section
     if detected_config.github_actions:
-        console.print("[bold]⚡ GitHub Actions Hooks[/bold]")
+        console.print("[bold]GitHub Actions Hooks[/bold]")
         config_dict["github_actions"] = Confirm.ask(
             "Include GitHub Actions hooks?", default=detected_config.github_actions
         )
@@ -192,19 +193,17 @@ def main() -> None:
     if args.interactive:
         console.print(
             Panel.fit(
-                "🚀 Pre-commit Starter\n\nGenerate pre-commit configuration for your project",
+                "Pre-commit Starter\n\nGenerate pre-commit configuration for your project",
                 style="bold green",
             )
         )
         console.print()
-        console.print(f"📁 Analyzing project at: [cyan]{current_path}[/cyan]")
+        console.print(f"Analyzing project at: [cyan]{current_path}[/cyan]")
         console.print()
 
     # Auto-detect configuration
-    if args.interactive:
-        with console.status("🔍 Detecting technologies..."):
-            detected_config = discover_config(current_path)
-    else:
+    status_context = console.status("Detecting technologies...") if args.interactive else nullcontext()
+    with status_context:
         detected_config = discover_config(current_path)
 
     if args.interactive:
@@ -220,7 +219,7 @@ def main() -> None:
         console.print()
 
         # Generate the configuration
-        with console.status("🔨 Generating pre-commit configuration..."):
+        with console.status("Generating pre-commit configuration..."):
             pre_commit_yaml = render_config(final_config)
 
         # Output the configuration to stdout
@@ -233,7 +232,7 @@ def main() -> None:
         # Save configuration and run pre-commit
         config_file = current_path / ".pre-commit-config.yaml"
         config_file.write_text(pre_commit_yaml)
-        console.print(f"✅ Configuration saved to [green]{config_file}[/green]")
+        console.print(f"Configuration saved to [green]{config_file}[/green]")
 
         # Install and run pre-commit
         try:
@@ -252,16 +251,16 @@ def main() -> None:
                 check=False,
             )
             if result.returncode == 0:
-                console.print("✅ Pre-commit setup complete and all hooks passed!")
+                console.print("Pre-commit setup complete and all hooks passed!")
             else:
-                console.print("⚠️  Pre-commit setup complete but some hooks failed:")
+                console.print("Pre-commit setup complete but some hooks failed:")
                 console.print(result.stdout)
                 if result.stderr:
                     console.print(result.stderr)
         except subprocess.CalledProcessError as e:
-            console.print(f"❌ Failed to setup pre-commit: {e}")
+            console.print(f"Failed to setup pre-commit: {e}")
         except FileNotFoundError:
-            console.print("❌ pre-commit not found in PATH")
+            console.print("pre-commit not found in PATH")
 
 
 if __name__ == "__main__":
