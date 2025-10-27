@@ -1,89 +1,84 @@
+# ===============================================================================
+# pre-commit-config.yaml created with https://github.com/Jakub3628800/pre-commit-template
+# ===============================================================================
 default_language_version:
   python: python3.14
 repos:
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v6.0.0
-  hooks:
-  - id: trailing-whitespace
-    name: Trim trailing whitespace
-  - id: end-of-file-fixer
-    name: Fix end of files
-  - id: check-yaml
-    name: Check YAML
-  - id: check-toml
-    name: Check TOML
-  - id: check-added-large-files
-    name: Check for added large files
-  - id: check-merge-conflict
-    name: Check for merge conflict strings
-  - id: detect-private-key
-    name: Detect private keys
-  - id: detect-aws-credentials
-    name: Detect AWS credentials
-    args:
-    - --allow-missing-credentials
-  - id: no-commit-to-branch
-    name: Prevent commits to main/master
-    always_run: false
-    args:
-    - --branch
-    - main
-    - --branch
-    - master
-  - id: check-case-conflict
-    name: Check for case conflicts
-  - id: check-executables-have-shebangs
-    name: Check executables have shebangs
-  - id: check-ast
-    name: Check Python AST
-  - id: check-builtin-literals
-    name: Check builtin literals
-  - id: check-docstring-first
-    name: Check docstring first
-  - id: debug-statements
-    name: Check for debug statements
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.14.0
-  hooks:
-  - id: ruff-format
-    name: Format Python code with Ruff
-    args:
-    - --line-length=120
-  - id: ruff
-    name: Run Ruff linter and formatter
-    args:
-    - --line-length=120
-- repo: https://github.com/facebook/pyrefly-pre-commit
-  rev: 0.0.1
-  hooks:
-  - id: pyrefly-typecheck-specific-version
-    name: Run Pyrefly type checker
-    pass_filenames: false
-    additional_dependencies:
-    - pyrefly==0.30.0
-    - PyYAML
-    - rich
-    - jinja2
-    - pydantic
-    - pytest
-    - tomli
-- repo: https://github.com/astral-sh/uv-pre-commit
-  rev: 0.9.2
-  hooks:
-  - id: uv-lock
-    name: Check uv.lock is up-to-date
-- repo: https://github.com/rhysd/actionlint
-  rev: v1.7.8
-  hooks:
-  - id: actionlint
-    name: Lint GitHub Actions workflows
-    description: Lint GitHub Actions workflow files
-    files: ^\.github/workflows/.*\.(yml|yaml)$
-- repo: local
-  hooks:
-  - id: mypy
-    name: mypy
-    entry: mypy
-    language: system
-    types:
-    - python
+  # =====================
+  # Base hooks
+  # =====================
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+    - id: trailing-whitespace
+      name: Trim trailing whitespace
+    - id: end-of-file-fixer
+      name: Fix end of files
+    - id: check-yaml
+      name: Check YAML
+    - id: check-toml
+      name: Check TOML
+    - id: check-added-large-files
+      name: Check for added large files
+    - id: check-merge-conflict
+      name: Check for merge conflict strings
+    - id: detect-private-key
+      name: Detect private keys
+    - id: detect-aws-credentials
+      name: Detect AWS credentials
+      args: [--allow-missing-credentials]
+    - id: no-commit-to-branch
+      name: Prevent commits to main/master
+      always_run: false
+      args: [--branch, main, --branch, master]
+    - id: check-case-conflict
+      name: Check for case conflicts
+    - id: check-executables-have-shebangs
+      name: Check executables have shebangs
+    - id: check-ast
+      name: Check Python AST
+    - id: check-builtin-literals
+      name: Check builtin literals
+    - id: check-docstring-first
+      name: Check docstring first
+    - id: debug-statements
+      name: Check for debug statements
+
+  # =====================
+  # Python hooks
+  # =====================
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.2
+    hooks:
+    - id: ruff-format
+      name: Format Python code with Ruff
+      args: [--line-length=120]
+    - id: ruff
+      name: Run Ruff linter and formatter
+      args: [--line-length=120]
+
+  - repo: https://github.com/facebook/pyrefly-pre-commit
+    rev: 0.0.1
+    hooks:
+    - id: pyrefly-typecheck-specific-version
+      name: Run Pyrefly type checker
+      pass_filenames: false
+      additional_dependencies: ["pyrefly==0.30.0", "PyYAML", "rich", "jinja2", "pydantic", "pytest", "tomli"]
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.9.5
+    hooks:
+    - id: uv-lock
+      name: Check uv.lock is up-to-date
+
+  # =====================
+  # GitHub Actions hooks
+  # =====================
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.8
+    hooks:
+    - id: actionlint
+      name: Lint GitHub Actions workflows
+      description: Lint GitHub Actions workflow files
+      files: '^\.github/workflows/.*\.(yml|yaml)$'
