@@ -14,6 +14,7 @@ class TestComplexConfigurations:
             python_version="python3.11",
             python_base=True,
             uv_lock=True,
+            check_exports=True,
             pyrefly_args=["--strict"],
             js=True,
             typescript=True,
@@ -40,6 +41,7 @@ class TestComplexConfigurations:
         assert "ruff" in result
         assert "repos:" in result
         assert "pyrefly" in result
+        assert "check-exports" in result
 
     def test_render_config_minimal_configuration(self):
         """Test rendering with minimal configuration."""
@@ -81,3 +83,70 @@ class TestComplexConfigurations:
         # Should contain required sections
         assert "repos:" in result
         assert "default_language_version:" in result
+
+
+class TestCheckExportsFeature:
+    """Test the check_exports template feature."""
+
+    def test_check_exports_disabled_by_default(self):
+        """Test that check_exports is disabled by default."""
+        config = PreCommitConfig(python=True)
+        result = render_config(config)
+
+        assert "check-exports" not in result
+
+    def test_check_exports_enabled(self):
+        """Test that check_exports hook is rendered when enabled."""
+        config = PreCommitConfig(python=True, check_exports=True)
+        result = render_config(config)
+
+        assert "check-exports" in result
+        assert "Check library exports" in result
+
+    def test_check_exports_with_proper_configuration(self):
+        """Test that check_exports hook has correct configuration."""
+        config = PreCommitConfig(python=True, check_exports=True)
+        result = render_config(config)
+
+        # Verify key hook properties
+        assert "- id: check-exports" in result
+        assert "language: python" in result
+        assert "stages: [pre-commit]" in result
+        assert "entry: check-exports" in result
+
+    def test_check_exports_with_other_python_hooks(self):
+        """Test that check_exports works alongside other Python hooks."""
+        config = PreCommitConfig(python=True, check_exports=True, uv_lock=True, pyrefly_args=["--strict"])
+        result = render_config(config)
+
+        # All three should be present
+        assert "check-exports" in result
+        assert "uv-lock" in result
+        assert "pyrefly" in result
+
+    def test_check_exports_yaml_validity(self):
+        """Test that check_exports produces valid YAML."""
+        import yaml
+
+        config = PreCommitConfig(python=True, check_exports=True)
+        result = render_config(config)
+
+        # Should not raise an exception
+        parsed = yaml.safe_load(result)
+        assert parsed is not None
+
+        # Verify hook is in the parsed structure
+        found = False
+        for repo in parsed.get("repos", []):
+            for hook in repo.get("hooks", []):
+                if hook.get("id") == "check-exports":
+                    found = True
+        assert found
+
+    def test_check_exports_without_python_flag(self):
+        """Test that check_exports is ignored if python is disabled."""
+        config = PreCommitConfig(python=False, check_exports=True)
+        result = render_config(config)
+
+        # check_exports should not appear because python hooks are not enabled
+        assert "check-exports" not in result
