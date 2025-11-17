@@ -1,9 +1,5 @@
 """Tests for export_parser module."""
 
-from pathlib import Path
-
-import pytest
-
 from pre_commit_tools.check_exports.export_parser import get_exported_functions, get_init_path, get_library_root
 
 

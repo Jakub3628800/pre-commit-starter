@@ -54,15 +54,14 @@ def get_exported_functions(init_path: Path) -> Set[str]:
 def _get_all_list(tree: ast.Module) -> Set[str]:
     """Extract __all__ list from module if it exists."""
     for node in ast.walk(tree):
-        if isinstance(node, ast.Assign):
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.List):
             for target in node.targets:
                 if isinstance(target, ast.Name) and target.id == "__all__":
-                    if isinstance(node.value, ast.List):
-                        return {
-                            elt.value
-                            for elt in node.value.elts
-                            if isinstance(elt, ast.Constant) and isinstance(elt.value, str)
-                        }
+                    return {
+                        elt.value
+                        for elt in node.value.elts
+                        if isinstance(elt, ast.Constant) and isinstance(elt.value, str)
+                    }
     return set()
 
 

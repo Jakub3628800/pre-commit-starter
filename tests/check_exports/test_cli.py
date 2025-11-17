@@ -1,10 +1,7 @@
 """Tests for CLI module."""
 
 import sys
-from pathlib import Path
 from unittest.mock import patch
-
-import pytest
 
 from pre_commit_tools.check_exports.cli import main
 
