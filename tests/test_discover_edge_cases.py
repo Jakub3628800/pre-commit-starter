@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-from pre_commit_starter.discover import (
+from pre_commit_tools.discover import (
     detect_python_version,
     find_config_files,
     is_ignored_by_gitignore,

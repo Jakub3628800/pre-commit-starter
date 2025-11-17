@@ -3,7 +3,7 @@ requires = ["uv", "setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pre-commit-starter"
+name = "pre-commit-tools"
 version = "0.1.1"
 description = "Sipmle tool to generate pre-commit configuration files and hooks."
 readme = "README.md"
@@ -17,6 +17,8 @@ dependencies = [
     "rich>=13.0.0",
     "jinja2>=3.1.0",
     "pydantic>=2.0.0",
+    "mypy>=1.0.0",
+    "tomli>=2.0.0;python_version<'3.11'",
 ]
 
 [project.optional-dependencies]
@@ -27,14 +29,15 @@ dev = [
 ]
 
 [project.scripts]
-pre-commit-starter = "pre_commit_starter.main:main"
+pre-commit-tools = "pre_commit_tools.main:main"
+check-exports = "pre_commit_tools.check_exports.cli:main"
 
 [tool.setuptools]
-packages = ["pre_commit_starter"]
+packages = ["pre_commit_tools", "pre_commit_tools.check_exports"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
-"pre_commit_starter" = ["hook_templates/*.j2"]
+"pre_commit_tools" = ["hook_templates/*.j2"]
 
 [tool.pytest.ini_options]
 markers = [
