@@ -3,5 +3,5 @@
   entry: check-exports
   language: python
   types: [python]
-  stages: [commit]
+  stages: [pre-commit]
   description: Verify that all public functions are exported in __init__.py and non-exported functions are not imported externally

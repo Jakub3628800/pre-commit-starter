@@ -64,6 +64,7 @@ def render_config(config: PreCommitConfig) -> str:
             config.python,
             {
                 "uv_lock": config.uv_lock,
+                "check_exports": config.check_exports,
                 "pyrefly_args": config.pyrefly_args,
             },
         ),
