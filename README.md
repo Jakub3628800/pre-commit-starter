@@ -1,6 +1,14 @@
 # pre-commit-starter
 
-A CLI tool that automatically detects technologies in your repository and generates an appropriate `.pre-commit-config.yaml` file with relevant hooks.
+A collection of tools for pre-commit hook management and Python library validation.
+
+## Tools
+
+### 1. pre-commit-starter CLI
+Automatically detects technologies in your repository and generates an appropriate `.pre-commit-config.yaml` file with relevant hooks.
+
+### 2. check-exports CLI + pre-commit hook
+Validates that non-exported functions aren't imported from outside library boundaries. Can be used as a standalone CLI or integrated as a pre-commit hook.
 
 ## Quick Start
 
@@ -65,7 +73,7 @@ make clean
 
 ### Supported Technologies
 
-- **Python**: Ruff (linting/formatting) + MyPy (type checking)
+- **Python**: Ruff (linting/formatting) + Pyrefly (type checking) + check-exports (optional library validation)
 - **JavaScript/TypeScript**: Prettier + ESLint
 - **Go**: golangci-lint + formatting
 - **Docker**: hadolint for Dockerfile linting
