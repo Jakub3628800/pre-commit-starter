@@ -1,9 +1,5 @@
 """Tests for validator module."""
 
-from pathlib import Path
-
-import pytest
-
 from pre_commit_tools.check_exports.validator import validate_library, validate_libraries, Violation
 
 

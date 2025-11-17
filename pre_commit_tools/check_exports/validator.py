@@ -1,11 +1,30 @@
 """Validate that non-exported functions are not imported from outside the library."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Tuple, TypedDict
 
 from pre_commit_tools.check_exports.export_parser import get_exported_functions, get_init_path, get_library_root
 from pre_commit_tools.check_exports.import_detector import find_imports_via_ast
-from pre_commit_tools.check_exports.exceptions import NoInitFileError, InvalidLibraryPath
+
+
+class SingleLibraryStats(TypedDict):
+    """Type definition for statistics from a single library validation."""
+
+    lib_name: str
+    exports_count: int
+    imports_count: int
+    violations_count: int
+    execution_time: float
+
+
+class AggregatedStats(TypedDict):
+    """Type definition for aggregated statistics from multiple library validations."""
+
+    libraries: List[SingleLibraryStats]
+    total_exports: int
+    total_imports: int
+    total_violations: int
+    total_execution_time: float
 
 
 class Violation:
@@ -45,7 +64,7 @@ def validate_library(
     lib_path: str,
     exclude_patterns: Optional[List[str]] = None,
     verbose: bool = False,
-) -> tuple[List[Violation], Dict[str, Any]]:
+) -> Tuple[List[Violation], SingleLibraryStats]:
     """
     Validate that no non-exported functions are imported from outside the library.
 
@@ -108,7 +127,7 @@ def validate_library(
                     violations.append(Violation(lib_name, func_name, str(file_path), line_num))
 
     # Calculate statistics
-    stats = {
+    stats: SingleLibraryStats = {
         "lib_name": lib_name,
         "exports_count": len(exported),
         "imports_count": len(imports),
@@ -123,7 +142,7 @@ def validate_libraries(
     lib_paths: List[str],
     exclude_patterns: Optional[List[str]] = None,
     verbose: bool = False,
-) -> tuple[List[Violation], Dict[str, Any]]:
+) -> Tuple[List[Violation], AggregatedStats]:
     """
     Validate multiple libraries.
 
@@ -136,7 +155,7 @@ def validate_libraries(
         Tuple of (combined violations list, statistics dict)
     """
     all_violations: List[Violation] = []
-    all_stats = {
+    all_stats: AggregatedStats = {
         "libraries": [],
         "total_exports": 0,
         "total_imports": 0,

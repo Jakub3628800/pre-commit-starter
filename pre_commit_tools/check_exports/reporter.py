@@ -1,7 +1,6 @@
 """Report violations in a human-readable format."""
 
 import json
-import sys
 from typing import List
 
 from pre_commit_tools.check_exports.validator import Violation

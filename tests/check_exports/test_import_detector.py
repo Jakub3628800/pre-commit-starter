@@ -1,9 +1,5 @@
 """Tests for import_detector module."""
 
-from pathlib import Path
-
-import pytest
-
 from pre_commit_tools.check_exports.import_detector import find_imports_via_ast
 
 
