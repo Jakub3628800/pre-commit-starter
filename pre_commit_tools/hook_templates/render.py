@@ -3,7 +3,7 @@ from typing import Any, Optional
 
 from jinja2 import Environment, FileSystemLoader
 
-from pre_commit_starter.config import PreCommitConfig
+from pre_commit_tools.config import PreCommitConfig
 
 # Initialize Jinja2 environment once at module level
 TEMPLATES_DIR = Path(__file__).parent

@@ -4,7 +4,7 @@ import json
 import pytest
 from pydantic import ValidationError
 
-from pre_commit_starter.config import PreCommitConfig
+from pre_commit_tools.config import PreCommitConfig
 
 
 class TestPreCommitConfigValidation:

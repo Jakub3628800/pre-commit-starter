@@ -1,7 +1,7 @@
 """Tests for untested edge cases in render_template.py module."""
 
-from pre_commit_starter.config import PreCommitConfig
-from pre_commit_starter.hook_templates import render_config
+from pre_commit_tools.config import PreCommitConfig
+from pre_commit_tools.hook_templates import render_config
 
 
 class TestComplexConfigurations:
