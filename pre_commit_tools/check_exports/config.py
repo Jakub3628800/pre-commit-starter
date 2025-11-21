@@ -130,6 +130,7 @@ class Config:
 
         libraries = [lib.strip() for lib in libs.split(",") if lib.strip()]
         json_format = os.getenv("CHECK_EXPORTS_JSON", "").lower() == "true"
+        quiet = os.getenv("CHECK_EXPORTS_QUIET", "").lower() == "true"
         no_color = os.getenv("CHECK_EXPORTS_NO_COLOR", "").lower() == "true"
         verbose = os.getenv("CHECK_EXPORTS_VERBOSE", "").lower() == "true"
         exclude = os.getenv("CHECK_EXPORTS_EXCLUDE", "").split(",")
@@ -143,6 +144,7 @@ class Config:
         return Config(
             libraries=libraries,
             json_format=json_format,
+            quiet=quiet,
             no_color=no_color,
             verbose=verbose,
             exclude_patterns=exclude_patterns,

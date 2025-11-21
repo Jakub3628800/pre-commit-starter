@@ -1,4 +1,4 @@
-"""Interactive main script for pre-commit-starter."""
+"""Interactive main script for pre-commit-tools."""
 
 import argparse
 import subprocess
