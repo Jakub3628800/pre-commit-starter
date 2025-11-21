@@ -288,22 +288,34 @@ def detect_python_version(path: Path) -> Optional[str]:
     # Check pyproject.toml
     pyproject_file = path / "pyproject.toml"
     if pyproject_file.exists():
+        toml_lib = None
         try:
             import tomllib
 
-            with open(pyproject_file, "rb") as f:
-                data = tomllib.load(f)
+            toml_lib = tomllib
+        except ImportError:
+            try:
+                import tomli
 
-            # Check requires-python
-            project = data.get("project", {})
-            requires_python = project.get("requires-python")
-            if requires_python and isinstance(requires_python, str):
-                # Extract version like ">=3.14" -> "python3.14"
-                if ">=" in requires_python:
-                    version = requires_python.split(">=")[1].strip()
-                    return f"python{version}"
-        except Exception:
-            pass
+                toml_lib = tomli
+            except ImportError:
+                pass
+
+        if toml_lib:
+            try:
+                with open(pyproject_file, "rb") as f:
+                    data = toml_lib.load(f)
+
+                # Check requires-python
+                project = data.get("project", {})
+                requires_python = project.get("requires-python")
+                if requires_python and isinstance(requires_python, str):
+                    # Extract version like ">=3.14" -> "python3.14"
+                    if ">=" in requires_python:
+                        version = requires_python.split(">=")[1].strip()
+                        return f"python{version}"
+            except Exception:
+                pass
 
     # Check .python-version file
     python_version_file = path / ".python-version"
@@ -400,7 +412,7 @@ def discover_config(path: Path) -> PreCommitConfig:
         executables=True,  # Always enable for shell script safety
         python=has_python,
         python_base=has_python,  # Include Python base checks if Python detected
-        uv_lock=has_python,  # Always use uv for Python projects
+        uv_lock=detect_uv_lock(files),  # Use uv lock if uv.lock file exists
         js=has_js,
         typescript=has_typescript,
         jsx=has_jsx,

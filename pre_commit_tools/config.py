@@ -52,7 +52,7 @@ class PreCommitConfig(BaseModel):
 
     @field_validator("python_version")
     @classmethod
-    def validate_python_version(cls, v: str) -> str:
+    def validate_python_version(cls, v: Optional[str]) -> Optional[str]:
         """Validate Python version format."""
         if v is not None and not v.startswith("python"):
             raise ValueError('Python version must start with "python" (e.g., python3.14)')
