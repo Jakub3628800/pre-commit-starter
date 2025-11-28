@@ -33,7 +33,7 @@ pre-commit-tools = "pre_commit_tools.main:main"
 check-exports = "pre_commit_tools.check_exports.cli:main"
 
 [tool.setuptools]
-packages = ["pre_commit_tools", "pre_commit_tools.check_exports"]
+packages = ["pre_commit_tools", "pre_commit_tools.check_exports", "pre_commit_tools.hook_templates"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]
