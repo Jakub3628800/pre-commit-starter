@@ -57,16 +57,12 @@ __all__ = ["public_func"]
         # Create two valid libraries
         lib1_dir = temp_codebase / "lib1"
         lib1_dir.mkdir()
-        (lib1_dir / "__init__.py").write_text(
-            "from lib1.core import func1\n__all__ = ['func1']"
-        )
+        (lib1_dir / "__init__.py").write_text("from lib1.core import func1\n__all__ = ['func1']")
         (lib1_dir / "core.py").write_text("def func1(): pass")
 
         lib2_dir = temp_codebase / "lib2"
         lib2_dir.mkdir()
-        (lib2_dir / "__init__.py").write_text(
-            "from lib2.core import func2\n__all__ = ['func2']"
-        )
+        (lib2_dir / "__init__.py").write_text("from lib2.core import func2\n__all__ = ['func2']")
         (lib2_dir / "core.py").write_text("def func2(): pass")
 
         external_dir = temp_codebase / "external"

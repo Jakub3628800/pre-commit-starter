@@ -40,9 +40,7 @@ class TemplateUpdater:
         self.updated_hooks: List[Dict[str, str]] = []
 
         if not self.template_dir.exists():
-            raise FileNotFoundError(
-                f"Template directory not found: {self.template_dir}"
-            )
+            raise FileNotFoundError(f"Template directory not found: {self.template_dir}")
 
     def setup_temp_directory(self) -> Path:
         """Create a temporary directory for the update process."""
@@ -50,9 +48,7 @@ class TemplateUpdater:
 
         # Initialize git repo (required by pre-commit)
         try:
-            subprocess.run(
-                ["git", "init"], cwd=str(self.temp_dir), capture_output=True, check=True
-            )
+            subprocess.run(["git", "init"], cwd=str(self.temp_dir), capture_output=True, check=True)
             subprocess.run(
                 ["git", "config", "user.email", "test@example.com"],
                 cwd=str(self.temp_dir),
@@ -155,9 +151,7 @@ class TemplateUpdater:
     def run_autoupdate(self) -> tuple[bool, str]:
         """Run pre-commit autoupdate and return success status and stdout."""
         try:
-            subprocess.run(
-                ["pre-commit", "--version"], capture_output=True, text=True, check=True
-            )
+            subprocess.run(["pre-commit", "--version"], capture_output=True, text=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
             print("ERROR: pre-commit is not installed or not in PATH")
             print("Install with: pip install pre-commit")
@@ -236,9 +230,7 @@ class TemplateUpdater:
                 repo_url = match.group(1)
                 old_rev = match.group(2)
                 new_rev = match.group(3)
-                updated_hooks.append(
-                    {"repo": repo_url, "old_rev": old_rev, "new_rev": new_rev}
-                )
+                updated_hooks.append({"repo": repo_url, "old_rev": old_rev, "new_rev": new_rev})
 
         self.updated_hooks = updated_hooks
         return updated_hooks
@@ -278,9 +270,7 @@ class TemplateUpdater:
             print("\nAll hook versions are current")
             return
 
-        print(
-            f"\nUpdated {len(self.updated_hooks)} hooks in {len(updates_per_file)} files:"
-        )
+        print(f"\nUpdated {len(self.updated_hooks)} hooks in {len(updates_per_file)} files:")
         for hook in self.updated_hooks:
             repo_name = hook["repo"].split("/")[-1]
             print(f"  {repo_name}: {hook['old_rev']} → {hook['new_rev']}")

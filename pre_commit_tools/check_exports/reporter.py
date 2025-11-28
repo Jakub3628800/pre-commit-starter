@@ -29,9 +29,7 @@ def _colorize(text: str, color: str) -> str:
     return f"{color}{text}{RESET}"
 
 
-def report_violations(
-    violations: List[Violation], format: str = "text", use_colors: bool = True
-) -> None:
+def report_violations(violations: List[Violation], format: str = "text", use_colors: bool = True) -> None:
     """
     Print violations to stdout in a readable format.
 

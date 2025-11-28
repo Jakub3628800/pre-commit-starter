@@ -84,7 +84,9 @@ class Violation:
         if self.hint:
             msg += f"\n              → {self.hint}"
         elif not self.is_warning:
-            msg += f"\n              → Add '{self.func_name}' to {self.lib_name}.__init__.py or use internal imports only"
+            msg += (
+                f"\n              → Add '{self.func_name}' to {self.lib_name}.__init__.py or use internal imports only"
+            )
         return msg
 
 
@@ -198,11 +200,7 @@ def validate_library(
                         # Deeper nesting
                         hint = f"Consider adding '{parts[0]}' to public_submodules or restructuring exports"
 
-                violations.append(
-                    Violation(
-                        lib_name, relative_path, str(file_path), line_num, hint=hint
-                    )
-                )
+                violations.append(Violation(lib_name, relative_path, str(file_path), line_num, hint=hint))
 
     # Calculate statistics
     stats: SingleLibraryStats = {
@@ -243,9 +241,7 @@ def validate_libraries(
     }
 
     for lib_path in lib_paths:
-        violations, stats = validate_library(
-            lib_path, exclude_patterns, public_submodules, verbose
-        )
+        violations, stats = validate_library(lib_path, exclude_patterns, public_submodules, verbose)
         all_violations.extend(violations)
 
         all_stats["libraries"].append(stats)
