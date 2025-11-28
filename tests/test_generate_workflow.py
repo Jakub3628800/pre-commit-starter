@@ -1,9 +1,6 @@
 """Tests for generate_workflow module."""
 
-from pathlib import Path
-from tempfile import TemporaryDirectory
 
-import pytest
 
 from pre_commit_tools.generate_workflow import generate_workflow
 
@@ -52,7 +49,7 @@ def test_generate_workflow_write_file(tmp_path):
     """Test writing workflow to file."""
     output_file = tmp_path / ".github" / "workflows" / "pre-commit.yml"
 
-    workflow = generate_workflow(output_path=output_file, main_branch="main")
+    generate_workflow(output_path=output_file, main_branch="main")
 
     assert output_file.exists()
     content = output_file.read_text()

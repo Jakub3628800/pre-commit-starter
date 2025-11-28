@@ -1,23 +1,39 @@
-# pre-commit-starter
+# pre-commit-tools
 
-A collection of tools for pre-commit hook management and Python library validation.
+A collection of tools for pre-commit hook management, Python library validation, and CI/CD workflow generation.
 
 ## Tools
 
-### 1. pre-commit-starter CLI
-Automatically detects technologies in your repository and generates an appropriate `.pre-commit-config.yaml` file with relevant hooks.
+### 1. pre-commit-tools
+Automatically detects technologies in your repository and generates an appropriate `.pre-commit-config.yaml` file with relevant hooks. The generated config includes version tracking metadata for easy regeneration and drift detection.
 
-### 2. check-exports CLI + pre-commit hook
-Validates that non-exported functions aren't imported from outside library boundaries. Can be used as a standalone CLI or integrated as a pre-commit hook.
+### 2. check-exports
+Validates that non-exported functions aren't imported from outside library boundaries. Features include:
+- Warnings for underscore-prefixed exports
+- Public submodules support
+- Auto-suggestions for fixing violations
+- Can be used as a standalone CLI or integrated as a pre-commit hook
+
+### 3. generate-workflow
+Generates GitHub Actions workflows for running pre-commit hooks in CI using `uv`. Creates modern workflows that automatically sync with your local pre-commit configuration.
 
 ## Quick Start
 
 ### Using uv (Recommended)
 
-Run once in your repository:
-
+Generate a pre-commit config:
 ```bash
-uvx --from git+https://github.com/Jakub3628800/pre-commit-starter pre-commit-starter
+uvx --from git+https://github.com/Jakub3628800/pre-commit-tools pre-commit-tools
+```
+
+Generate a GitHub Actions workflow:
+```bash
+uvx --from git+https://github.com/Jakub3628800/pre-commit-tools generate-workflow
+```
+
+Validate library exports:
+```bash
+uvx --from git+https://github.com/Jakub3628800/pre-commit-tools check-exports ./mylib
 ```
 
 ### Using the tool directly
@@ -25,15 +41,15 @@ uvx --from git+https://github.com/Jakub3628800/pre-commit-starter pre-commit-sta
 If you have the repository cloned:
 
 ```bash
-git clone https://github.com/Jakub3628800/pre-commit-starter
-cd pre-commit-starter
+git clone https://github.com/Jakub3628800/pre-commit-tools
+cd pre-commit-tools
 make install
-make run
+make run  # Runs pre-commit-tools
 ```
 
-This will:
+The `pre-commit-tools` generator will:
 1. Scan your repository for technologies (Python, JavaScript, Go, Docker, etc.)
-2. Generate a `.pre-commit-config.yaml` file with appropriate hooks
+2. Generate a `.pre-commit-config.yaml` file with appropriate hooks and version tracking
 3. Guide you through customization options
 
 ## After Generation
@@ -41,13 +57,14 @@ This will:
 Install and run pre-commit:
 
 ```bash
-# Install pre-commit
-pip install pre-commit
-# or
-uvx --from pre-commit pre-commit install
+# Install pre-commit hooks
+uvx pre-commit install
 
 # Run on all files
-pre-commit run --all-files
+uvx pre-commit run --all-files
+
+# Or use uv run if you have pre-commit in your dependencies
+uv run pre-commit run --all-files
 ```
 
 ## Development
