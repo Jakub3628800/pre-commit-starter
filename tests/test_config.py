@@ -88,7 +88,9 @@ class TestPreCommitConfigValidation:
 
     def test_model_serialization_with_aliases(self):
         """Test model serialization uses aliases when requested."""
-        config = PreCommitConfig(yaml=True, json=True, python=True, python_version="python3.9")
+        config = PreCommitConfig(
+            yaml=True, json=True, python=True, python_version="python3.9"
+        )
 
         # Serialize with aliases
         data_with_aliases = config.model_dump(by_alias=True)
@@ -163,7 +165,9 @@ class TestPreCommitConfigValidation:
 
     def test_model_copy(self):
         """Test model copying functionality."""
-        original = PreCommitConfig(python=True, python_version="python3.9", pyrefly_args=["--strict"])
+        original = PreCommitConfig(
+            python=True, python_version="python3.9", pyrefly_args=["--strict"]
+        )
 
         # Copy with modifications
         modified = original.model_copy(update={"python_version": "python3.10"})

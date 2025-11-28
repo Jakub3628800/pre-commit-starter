@@ -1,7 +1,5 @@
 """Tests for generate_workflow module."""
 
-
-
 from pre_commit_tools.generate_workflow import generate_workflow
 
 

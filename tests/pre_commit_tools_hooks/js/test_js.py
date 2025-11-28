@@ -20,8 +20,12 @@ def test_generate_js_hooks_basic():
     assert isinstance(parsed_repos, list)
 
     # Should have prettier and eslint repos
-    prettier_repo = next((repo for repo in parsed_repos if "mirrors-prettier" in repo["repo"]), None)
-    eslint_repo = next((repo for repo in parsed_repos if "mirrors-eslint" in repo["repo"]), None)
+    prettier_repo = next(
+        (repo for repo in parsed_repos if "mirrors-prettier" in repo["repo"]), None
+    )
+    eslint_repo = next(
+        (repo for repo in parsed_repos if "mirrors-eslint" in repo["repo"]), None
+    )
 
     assert prettier_repo is not None
     assert eslint_repo is not None
@@ -44,10 +48,14 @@ def test_generate_js_hooks_with_typescript():
     assert isinstance(parsed_repos, list)
 
     # Check that TypeScript dependencies are included
-    eslint_repo = next((repo for repo in parsed_repos if "mirrors-eslint" in repo["repo"]), None)
+    eslint_repo = next(
+        (repo for repo in parsed_repos if "mirrors-eslint" in repo["repo"]), None
+    )
     assert eslint_repo is not None
 
-    eslint_hook = next((hook for hook in eslint_repo["hooks"] if hook["id"] == "eslint"), None)
+    eslint_hook = next(
+        (hook for hook in eslint_repo["hooks"] if hook["id"] == "eslint"), None
+    )
     assert eslint_hook is not None
 
     if "additional_dependencies" in eslint_hook:
@@ -64,10 +72,14 @@ def test_generate_js_hooks_with_jsx():
     assert isinstance(parsed_repos, list)
 
     # Check that React dependencies are included
-    eslint_repo = next((repo for repo in parsed_repos if "mirrors-eslint" in repo["repo"]), None)
+    eslint_repo = next(
+        (repo for repo in parsed_repos if "mirrors-eslint" in repo["repo"]), None
+    )
     assert eslint_repo is not None
 
-    eslint_hook = next((hook for hook in eslint_repo["hooks"] if hook["id"] == "eslint"), None)
+    eslint_hook = next(
+        (hook for hook in eslint_repo["hooks"] if hook["id"] == "eslint"), None
+    )
     assert eslint_hook is not None
 
     if "additional_dependencies" in eslint_hook:
@@ -80,24 +92,34 @@ def test_generate_js_hooks_with_configs():
     prettier_config = ".prettierrc.json"
     eslint_config = ".eslintrc.js"
 
-    result = _generate_hooks("js", prettier_config=prettier_config, eslint_config=eslint_config)
+    result = _generate_hooks(
+        "js", prettier_config=prettier_config, eslint_config=eslint_config
+    )
 
     # Parse as YAML list
     parsed_repos = yaml.safe_load(result)
     assert isinstance(parsed_repos, list)
 
     # Check prettier config
-    prettier_repo = next((repo for repo in parsed_repos if "mirrors-prettier" in repo["repo"]), None)
+    prettier_repo = next(
+        (repo for repo in parsed_repos if "mirrors-prettier" in repo["repo"]), None
+    )
     if prettier_repo:
-        prettier_hook = next((hook for hook in prettier_repo["hooks"] if hook["id"] == "prettier"), None)
+        prettier_hook = next(
+            (hook for hook in prettier_repo["hooks"] if hook["id"] == "prettier"), None
+        )
         if prettier_hook and "args" in prettier_hook:
             args = prettier_hook["args"]
             assert any(prettier_config in str(arg) for arg in args)
 
     # Check eslint config
-    eslint_repo = next((repo for repo in parsed_repos if "mirrors-eslint" in repo["repo"]), None)
+    eslint_repo = next(
+        (repo for repo in parsed_repos if "mirrors-eslint" in repo["repo"]), None
+    )
     if eslint_repo:
-        eslint_hook = next((hook for hook in eslint_repo["hooks"] if hook["id"] == "eslint"), None)
+        eslint_hook = next(
+            (hook for hook in eslint_repo["hooks"] if hook["id"] == "eslint"), None
+        )
         if eslint_hook and "args" in eslint_hook:
             args = eslint_hook["args"]
             assert any(eslint_config in str(arg) for arg in args)
@@ -118,8 +140,12 @@ def test_generate_js_hooks_all_options():
     assert isinstance(parsed_repos, list)
 
     # Should have both prettier and eslint
-    prettier_repo = next((repo for repo in parsed_repos if "mirrors-prettier" in repo["repo"]), None)
-    eslint_repo = next((repo for repo in parsed_repos if "mirrors-eslint" in repo["repo"]), None)
+    prettier_repo = next(
+        (repo for repo in parsed_repos if "mirrors-prettier" in repo["repo"]), None
+    )
+    eslint_repo = next(
+        (repo for repo in parsed_repos if "mirrors-eslint" in repo["repo"]), None
+    )
 
     assert prettier_repo is not None
     assert eslint_repo is not None
@@ -161,9 +187,13 @@ def test_file_type_configuration():
     assert isinstance(parsed_repos, list)
 
     # Check prettier hook file types
-    prettier_repo = next((repo for repo in parsed_repos if "mirrors-prettier" in repo["repo"]), None)
+    prettier_repo = next(
+        (repo for repo in parsed_repos if "mirrors-prettier" in repo["repo"]), None
+    )
     if prettier_repo:
-        prettier_hook = next((hook for hook in prettier_repo["hooks"] if hook["id"] == "prettier"), None)
+        prettier_hook = next(
+            (hook for hook in prettier_repo["hooks"] if hook["id"] == "prettier"), None
+        )
         if prettier_hook:
             # Should have types or types_or for file targeting
             assert "types" in prettier_hook or "types_or" in prettier_hook

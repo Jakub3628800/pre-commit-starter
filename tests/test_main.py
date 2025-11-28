@@ -19,7 +19,9 @@ class TestMainCLI:
     @patch("pre_commit_tools.main.render_config")
     @patch("subprocess.run")
     @patch("pathlib.Path.write_text")
-    def test_main_auto_generate_mode_default(self, mock_write, mock_subprocess, mock_render, mock_discover):
+    def test_main_auto_generate_mode_default(
+        self, mock_write, mock_subprocess, mock_render, mock_discover
+    ):
         """Test main function in default auto-generate mode."""
         # Setup mocks
         mock_config = PreCommitConfig(python=True, yaml=True)
@@ -40,7 +42,9 @@ class TestMainCLI:
     @patch("pre_commit_tools.main.render_config")
     @patch("subprocess.run")
     @patch("builtins.print")
-    def test_main_interactive_mode(self, mock_print, mock_subprocess, mock_render, mock_discover):
+    def test_main_interactive_mode(
+        self, mock_print, mock_subprocess, mock_render, mock_discover
+    ):
         """Test main function with -i flag for interactive mode."""
         # Setup mocks
         mock_config = PreCommitConfig(python=True)
@@ -69,7 +73,9 @@ class TestMainCLI:
                 with patch("pathlib.Path.write_text"):
                     main()
 
-        mock_console.print.assert_any_call("Failed to setup pre-commit: Command 'cmd' returned non-zero exit status 1.")
+        mock_console.print.assert_any_call(
+            "Failed to setup pre-commit: Command 'cmd' returned non-zero exit status 1."
+        )
 
     @patch("pre_commit_tools.main.discover_config")
     @patch("subprocess.run")
@@ -108,7 +114,9 @@ class TestMainCLI:
                 with patch("pathlib.Path.write_text"):
                     main()
 
-        mock_console.print.assert_any_call("Pre-commit setup complete but some hooks failed:")
+        mock_console.print.assert_any_call(
+            "Pre-commit setup complete but some hooks failed:"
+        )
         mock_console.print.assert_any_call("Hook failed output")
         mock_console.print.assert_any_call("Error details")
 
@@ -118,7 +126,9 @@ class TestUserPreferences:
 
     def test_ask_user_preferences_accept_all_defaults(self):
         """Test user accepting all default preferences."""
-        detected_config = PreCommitConfig(python=True, yaml=True, js=True, typescript=True)
+        detected_config = PreCommitConfig(
+            python=True, yaml=True, js=True, typescript=True
+        )
 
         # Mock all user responses as True to accept defaults
         with patch("pre_commit_tools.main.Confirm.ask", return_value=True):

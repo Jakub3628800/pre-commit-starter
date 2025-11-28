@@ -66,7 +66,11 @@ def detect_project_dependencies(path: Path) -> set[str]:
                 with open(req_path, encoding="utf-8") as f:
                     for raw_line in f:
                         line = raw_line.strip()
-                        if line and not line.startswith("#") and not line.startswith("-"):
+                        if (
+                            line
+                            and not line.startswith("#")
+                            and not line.startswith("-")
+                        ):
                             dependencies.add(extract_package_name(line))
             except Exception:
                 pass
@@ -94,7 +98,9 @@ def read_gitignore_patterns(path: Path) -> set[str]:
     return patterns
 
 
-def is_ignored_by_gitignore(file_path: Path, project_root: Path, gitignore_patterns: set[str]) -> bool:
+def is_ignored_by_gitignore(
+    file_path: Path, project_root: Path, gitignore_patterns: set[str]
+) -> bool:
     """Check if a file should be ignored based on gitignore patterns."""
     try:
         # Get relative path from project root
@@ -109,10 +115,14 @@ def is_ignored_by_gitignore(file_path: Path, project_root: Path, gitignore_patte
         for pattern in gitignore_patterns:
             # Handle directory patterns (ending with /)
             if pattern.endswith("/"):
-                if fnmatch.fnmatch(rel_path_str + "/", pattern) or fnmatch.fnmatch(rel_path_str, pattern[:-1]):
+                if fnmatch.fnmatch(rel_path_str + "/", pattern) or fnmatch.fnmatch(
+                    rel_path_str, pattern[:-1]
+                ):
                     return True
             # Handle file patterns
-            elif fnmatch.fnmatch(rel_path_str, pattern) or fnmatch.fnmatch(file_path.name, pattern):
+            elif fnmatch.fnmatch(rel_path_str, pattern) or fnmatch.fnmatch(
+                file_path.name, pattern
+            ):
                 return True
 
         return False
@@ -253,7 +263,9 @@ def detect_github_actions(files: set[str], path: Path) -> bool:
     # Check for .github/workflows directory
     github_workflows = path / ".github" / "workflows"
     if github_workflows.exists() and github_workflows.is_dir():
-        workflow_files = list(github_workflows.glob("*.yml")) + list(github_workflows.glob("*.yaml"))
+        workflow_files = list(github_workflows.glob("*.yml")) + list(
+            github_workflows.glob("*.yaml")
+        )
         return len(workflow_files) > 0
     return False
 
@@ -265,7 +277,9 @@ def has_file_type(files: set[str], indicators: set[str]) -> bool:
 
 def detect_yaml_files(files: set[str]) -> bool:
     """Detect if project has YAML files."""
-    return has_file_type(files, {".yml", ".yaml", "docker-compose.yml", "docker-compose.yaml"})
+    return has_file_type(
+        files, {".yml", ".yaml", "docker-compose.yml", "docker-compose.yaml"}
+    )
 
 
 def detect_json_files(files: set[str]) -> bool:
@@ -427,7 +441,9 @@ def discover_config(path: Path) -> PreCommitConfig:
 
 def main() -> None:
     """Main function for CLI usage."""
-    parser = argparse.ArgumentParser(description="Discover project technologies and generate config")
+    parser = argparse.ArgumentParser(
+        description="Discover project technologies and generate config"
+    )
     parser.add_argument(
         "--path",
         type=Path,

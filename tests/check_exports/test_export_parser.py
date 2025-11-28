@@ -1,6 +1,10 @@
 """Tests for export_parser module."""
 
-from pre_commit_tools.check_exports.export_parser import get_exported_functions, get_init_path, get_library_root
+from pre_commit_tools.check_exports.export_parser import (
+    get_exported_functions,
+    get_init_path,
+    get_library_root,
+)
 
 
 class TestGetExportedFunctions:
