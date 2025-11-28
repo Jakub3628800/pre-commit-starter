@@ -32,10 +32,10 @@ make build          # Build package
 
 This is a Python CLI tool that auto-generates `.pre-commit-config.yaml` files by detecting technologies in repositories. The architecture follows a modular design:
 
-- **File Scanner** (`src/detector/file_scanner.py`): Scans repository to detect technologies via file extensions and content patterns
-- **Hook Registry** (`src/hooks/hook_registry.py`): Maps detected technologies to appropriate pre-commit hooks with priority system
-- **YAML Builder** (`src/generator/yaml_builder.py`): Generates the final pre-commit configuration with smart hook merging and ordering
-- **CLI Interface** (`src/main.py`): Main entry point using argparse and rich for output formatting
+- **File Scanner** (`pre_commit_tools/detector/file_scanner.py`): Scans repository to detect technologies via file extensions and content patterns
+- **Hook Registry** (`pre_commit_tools/hooks/hook_registry.py`): Maps detected technologies to appropriate pre-commit hooks with priority system
+- **YAML Builder** (`pre_commit_tools/generator/yaml_builder.py`): Generates the final pre-commit configuration with smart hook merging and ordering
+- **CLI Interface** (`pre_commit_tools/main.py`): Main entry point using argparse and rich for output formatting
 
 ## Key Implementation Details
 
@@ -43,7 +43,7 @@ This is a Python CLI tool that auto-generates `.pre-commit-config.yaml` files by
 - Supports Python 3.14+ with setuptools build system
 - Technologies detected: Python, JavaScript, TypeScript, Go, Rust, HTML, CSS, YAML, Docker
 - Hook priority system: Security (1) → Basic Checks (2) → Language-Specific (3-4) → Framework-Specific (11) → Performance/Testing (12-14)
-- Test fixtures in `src/tests/fixtures/sample_repos/` with expected configs in `src/tests/expected_configs/`
+- Test fixtures in `tests/fixtures/sample_repos/` with expected configs in `tests/expected_configs/`
 - Rich console output with progress indication and colored text
 
 ## Entry Point
