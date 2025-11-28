@@ -56,7 +56,7 @@ def _private_function():
 
         violations, stats = validate_library(str(lib_dir))
         assert len(violations) == 1
-        assert violations[0].func_name == "_private_function"
+        assert violations[0].func_name == "core._private_function"  # Now includes module path
 
     def test_internal_import_allowed(self, temp_codebase):
         """Test that internal library imports don't create violations."""

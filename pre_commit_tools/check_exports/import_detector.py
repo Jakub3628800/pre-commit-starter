@@ -36,23 +36,31 @@ def find_imports_via_ast(lib_root: Path) -> Dict[str, List[Tuple[str, int]]]:
             if isinstance(node, ast.ImportFrom):
                 # Check if import is from our library
                 if node.module and node.module.startswith(lib_name):
+                    lineno = getattr(node, "lineno", 0)
                     for alias in node.names:
                         func_name = alias.name
                         # Skip star imports (*) - they respect __all__ automatically
                         if func_name == "*":
                             continue
-                        key = f"{lib_name}.{func_name}"
+                        # Build full import path
+                        # e.g. "from mylib.sub import foo" -> "mylib.sub.foo"
+                        if node.module == lib_name:
+                            key = f"{lib_name}.{func_name}"
+                        else:
+                            # node.module is like "mylib.sub"
+                            key = f"{node.module}.{func_name}"
                         if key not in imports:
                             imports[key] = []
-                        imports[key].append((str(py_file), node.lineno))
+                        imports[key].append((str(py_file), lineno))
             elif isinstance(node, ast.Import):
                 # Handle direct imports like "import lib.module.function"
+                lineno = getattr(node, "lineno", 0)
                 for alias in node.names:
                     if alias.name.startswith(lib_name):
                         func_name = alias.name.split(".")[-1]
                         key = f"{lib_name}.{func_name}"
                         if key not in imports:
                             imports[key] = []
-                        imports[key].append((str(py_file), node.lineno))
+                        imports[key].append((str(py_file), lineno))
 
     return imports

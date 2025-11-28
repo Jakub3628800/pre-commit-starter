@@ -23,6 +23,7 @@ ENVIRONMENT VARIABLES:
   CHECK_EXPORTS_VERBOSE         Set to 'true' for verbose output
   CHECK_EXPORTS_EXCLUDE         Comma-separated exclude patterns
   CHECK_EXPORTS_MAX_VIOLATIONS  Maximum violations threshold
+  CHECK_EXPORTS_PUBLIC_SUBMODULES Comma-separated public submodules
 
 CONFIG FILE FORMAT (.check-exports.toml):
   [tool.check-exports]
@@ -33,6 +34,7 @@ CONFIG FILE FORMAT (.check-exports.toml):
   verbose = false
   exclude = ["tests/*", "build/*"]
   max_violations = 10
+  public_submodules = ["utils", "network"]
 
 EXAMPLES:
   check-exports ./mylib
@@ -43,6 +45,7 @@ EXAMPLES:
   check-exports --exclude "tests/*,build/*" ./lib
   check-exports --max-violations 5 ./lib
   check-exports --config ./config.toml
+  check-exports --public-submodules "utils,network" ./lib
   CHECK_EXPORTS_LIBS="./lib1,./lib2" check-exports
         """,
     )
@@ -87,6 +90,10 @@ EXAMPLES:
         type=int,
         help="Fail if violations exceed this number",
     )
+    parser.add_argument(
+        "--public-submodules",
+        help="Comma-separated list of submodules allowed to be imported directly",
+    )
 
     return parser
 
@@ -118,7 +125,9 @@ def main() -> int:
         no_color = parsed_args.no_color or env_config.no_color
         verbose = parsed_args.verbose or env_config.verbose
         exclude_patterns = _parse_exclude_patterns(parsed_args.exclude, env_config.exclude_patterns)
+
         max_violations = parsed_args.max_violations or env_config.max_violations
+        public_submodules = _parse_list(parsed_args.public_submodules) or env_config.public_submodules
     elif file_config:
         lib_paths = lib_paths or file_config.libraries
         json_format = parsed_args.json or file_config.json_format
@@ -127,6 +136,7 @@ def main() -> int:
         verbose = parsed_args.verbose or file_config.verbose
         exclude_patterns = _parse_exclude_patterns(parsed_args.exclude, file_config.exclude_patterns)
         max_violations = parsed_args.max_violations or file_config.max_violations
+        public_submodules = _parse_list(parsed_args.public_submodules) or file_config.public_submodules
     else:
         json_format = parsed_args.json
         quiet = parsed_args.quiet
@@ -134,19 +144,23 @@ def main() -> int:
         verbose = parsed_args.verbose
         exclude_patterns = _parse_exclude_patterns(parsed_args.exclude)
         max_violations = parsed_args.max_violations
+        public_submodules = _parse_list(parsed_args.public_submodules)
 
     if not lib_paths:
         parser.print_help()
         return 1
 
     # Validate all libraries
-    violations, stats = validate_libraries(lib_paths, exclude_patterns, verbose)
+    violations, stats = validate_libraries(lib_paths, exclude_patterns, public_submodules, verbose)
 
-    # Check max violations threshold
-    if max_violations and len(violations) > max_violations:
+    # Filter out warnings from exit code determination
+    error_violations = [v for v in violations if not v.is_warning]
+
+    # Check max violations threshold (only count errors)
+    if max_violations and len(error_violations) > max_violations:
         if not quiet:
             print(
-                f"Error: Found {len(violations)} violations, exceeds max of {max_violations}",
+                f"Error: Found {len(error_violations)} violations, exceeds max of {max_violations}",
                 file=sys.stderr,
             )
         return 1
@@ -166,7 +180,8 @@ def main() -> int:
                 use_colors=use_colors,
             )
 
-        return 1
+        # Return 1 only if there are actual errors (not just warnings)
+        return 1 if error_violations else 0
 
     if not quiet:
         report_success(
@@ -209,6 +224,13 @@ def _parse_exclude_patterns(cli_exclude: list | None, config_exclude: list | Non
             patterns.extend([p.strip() for p in pattern_arg.split(",")])
 
     return patterns
+
+
+def _parse_list(arg: str | None) -> list[str]:
+    """Parse comma-separated list from CLI arg."""
+    if not arg:
+        return []
+    return [s.strip() for s in arg.split(",") if s.strip()]
 
 
 if __name__ == "__main__":

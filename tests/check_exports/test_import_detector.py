@@ -22,9 +22,9 @@ class TestFindImportsViaAST:
         imports = find_imports_via_ast(lib_dir)
 
         assert "mylib.func" in imports
-        assert "mylib.helper" in imports
+        assert "mylib.core.helper" in imports  # Changed from mylib.helper
         assert len(imports["mylib.func"]) == 1
-        assert len(imports["mylib.helper"]) == 1
+        assert len(imports["mylib.core.helper"]) == 1
 
     def test_find_direct_import(self, temp_codebase):
         """Test finding 'import X' statements."""

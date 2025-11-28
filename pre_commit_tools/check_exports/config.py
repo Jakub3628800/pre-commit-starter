@@ -23,8 +23,10 @@ class Config:
         quiet: Whether to suppress success message
         no_color: Whether to disable colored output
         verbose: Whether to show detailed statistics
-        exclude_patterns: File patterns to exclude from checking
+
+
         max_violations: Maximum allowed violations before failing
+        public_submodules: List of submodules that are allowed to be imported directly
     """
 
     def __init__(
@@ -36,6 +38,7 @@ class Config:
         verbose: bool = False,
         exclude_patterns: Optional[List[str]] = None,
         max_violations: Optional[int] = None,
+        public_submodules: Optional[List[str]] = None,
     ) -> None:
         """Initialize configuration object.
 
@@ -46,7 +49,9 @@ class Config:
             no_color: Disable colored output if True (default: False)
             verbose: Show detailed stats if True (default: False)
             exclude_patterns: File patterns to exclude (default: [])
+
             max_violations: Max violations threshold (default: None)
+            public_submodules: Public submodules list (default: [])
         """
         self.libraries = libraries
         self.json_format = json_format
@@ -55,6 +60,7 @@ class Config:
         self.verbose = verbose
         self.exclude_patterns = exclude_patterns or []
         self.max_violations = max_violations
+        self.public_submodules = public_submodules or []
 
     @staticmethod
     def load_from_file(config_path: Optional[Path] = None) -> Optional["Config"]:
@@ -86,6 +92,7 @@ class Config:
             verbose = config_data.get("verbose", False)
             exclude_patterns = config_data.get("exclude", [])
             max_violations = config_data.get("max_violations", None)
+            public_submodules = config_data.get("public_submodules", [])
 
             if not libraries:
                 return None
@@ -98,6 +105,7 @@ class Config:
                 verbose=verbose,
                 exclude_patterns=exclude_patterns,
                 max_violations=max_violations,
+                public_submodules=public_submodules,
             )
 
         except FileNotFoundError:
@@ -120,6 +128,7 @@ class Config:
         - CHECK_EXPORTS_VERBOSE: Set to 'true' for verbose output
         - CHECK_EXPORTS_EXCLUDE: Comma-separated exclude patterns
         - CHECK_EXPORTS_MAX_VIOLATIONS: Maximum violations threshold
+        - CHECK_EXPORTS_PUBLIC_SUBMODULES: Comma-separated public submodules
 
         Returns:
             Config object if env vars set, None otherwise
@@ -141,6 +150,9 @@ class Config:
         if max_violations_str.isdigit():
             max_violations = int(max_violations_str)
 
+        public_subs = os.getenv("CHECK_EXPORTS_PUBLIC_SUBMODULES", "").split(",")
+        public_submodules = [s.strip() for s in public_subs if s.strip()]
+
         return Config(
             libraries=libraries,
             json_format=json_format,
@@ -149,6 +161,7 @@ class Config:
             verbose=verbose,
             exclude_patterns=exclude_patterns,
             max_violations=max_violations,
+            public_submodules=public_submodules,
         )
 
     def to_dict(self) -> dict:
@@ -161,4 +174,5 @@ class Config:
             "verbose": self.verbose,
             "exclude_patterns": self.exclude_patterns,
             "max_violations": self.max_violations,
+            "public_submodules": self.public_submodules,
         }
