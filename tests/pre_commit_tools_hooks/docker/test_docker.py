@@ -36,17 +36,13 @@ def test_generate_docker_hooks_with_dockerfile_linting():
     assert isinstance(parsed_repos, list)
 
     # Should have hadolint repo (if implemented) or base repo with additional hooks
-    hadolint_repo = next(
-        (repo for repo in parsed_repos if "hadolint" in repo["repo"]), None
-    )
+    hadolint_repo = next((repo for repo in parsed_repos if "hadolint" in repo["repo"]), None)
     if hadolint_repo:
         hook_ids = [hook["id"] for hook in hadolint_repo["hooks"]]
         assert "hadolint-docker" in hook_ids
     else:
         # Check if base repo has dockerfile-related hooks
-        base_repo = next(
-            (repo for repo in parsed_repos if "pre-commit-hooks" in repo["repo"]), None
-        )
+        base_repo = next((repo for repo in parsed_repos if "pre-commit-hooks" in repo["repo"]), None)
         if base_repo:
             hook_ids = [hook["id"] for hook in base_repo["hooks"]]
             # May have dockerfile-related hooks in base repo
