@@ -1,9 +1,13 @@
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
 from jinja2 import Environment, FileSystemLoader
 
 from pre_commit_tools.config import PreCommitConfig
+
+# Package version - update this when version changes
+__version__ = "0.1.1"
 
 # Initialize Jinja2 environment once at module level
 TEMPLATES_DIR = Path(__file__).parent
@@ -27,9 +31,20 @@ def _generate_hooks(hook_type: str, **kwargs: Any) -> str:
     return template.render(**kwargs)
 
 
-def _generate_meta_wrapper(content: str, python_version: Optional[str] = None) -> str:
+def _generate_meta_wrapper(
+    content: str,
+    python_version: Optional[str] = None,
+    technologies: Optional[list[str]] = None,
+) -> str:
     template = JINJA_ENV.get_template("meta.j2")
-    return template.render(content=content, python_version=python_version)
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return template.render(
+        content=content,
+        python_version=python_version,
+        version=__version__,
+        timestamp=timestamp,
+        technologies=technologies or [],
+    )
 
 
 def render_config(config: PreCommitConfig) -> str:
@@ -103,13 +118,22 @@ def render_config(config: PreCommitConfig) -> str:
         ),
     ]
 
+    # Build list of detected technologies
+    technologies = []
     for hook_type, enabled, params in optional_hooks:
         if enabled:
             hooks_content.append(_generate_hooks(hook_type, **params))
+            # Map internal names to display names
+            display_name = hook_type.replace("_", "-")
+            technologies.append(display_name)
 
     combined_content = "\n\n".join(hooks_content)
 
-    result = _generate_meta_wrapper(content=combined_content, python_version=config.python_version)
+    result = _generate_meta_wrapper(
+        content=combined_content,
+        python_version=config.python_version,
+        technologies=technologies,
+    )
     if not result.endswith("\n"):
         result += "\n"
     return result
