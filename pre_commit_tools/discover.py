@@ -7,7 +7,96 @@ import re
 from pathlib import Path
 from typing import Optional
 
+# Try to import TOML library (tomllib for Python 3.11+, tomli as fallback)
+try:
+    import tomllib as toml_lib
+except ImportError:
+    try:
+        import tomli as toml_lib
+    except ImportError:
+        toml_lib = None  # type: ignore[assignment]
+
 from .config import PreCommitConfig
+
+# Constants for ignored directories and files
+ALWAYS_IGNORED_DIRS = {".git", ".venv", "venv", "env", "node_modules", "__pycache__"}
+
+DEFAULT_GITIGNORE_PATTERNS = {
+    "__pycache__/",
+    "node_modules/",
+    ".venv/",
+    "venv/",
+    "env/",
+    "build/",
+    "dist/",
+    ".pytest_cache/",
+    ".pyrefly_cache/",
+    ".ruff_cache/",
+}
+
+# Technology detection indicators
+PYTHON_INDICATORS = {
+    "setup.py",
+    "pyproject.toml",
+    "requirements.txt",
+    "pipfile",
+    "poetry.lock",
+    "setup.cfg",
+    "tox.ini",
+    "pytest.ini",
+    ".py",
+    "manage.py",
+    "__init__.py",
+}
+
+JAVASCRIPT_INDICATORS = {
+    "package.json",
+    "yarn.lock",
+    "package-lock.json",
+    "npm-shrinkwrap.json",
+    ".js",
+    ".mjs",
+    ".cjs",
+    "webpack.config.js",
+    "vite.config.js",
+    "rollup.config.js",
+    "babel.config.js",
+    ".babelrc",
+}
+
+TYPESCRIPT_INDICATORS = {
+    "tsconfig.json",
+    "tsconfig.base.json",
+    "tsconfig.build.json",
+    ".ts",
+    ".tsx",
+    ".d.ts",
+}
+
+JSX_INDICATORS = {
+    ".jsx",
+    ".tsx",
+    "next.config.js",
+    "gatsby-config.js",
+    "react-scripts",
+    ".storybook",
+}
+
+GO_INDICATORS = {"go.mod", "go.sum", "main.go", ".go", "vendor"}
+
+DOCKER_INDICATORS = {
+    "dockerfile",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    ".dockerignore",
+    "dockerfile.dev",
+    "dockerfile.prod",
+}
+
+YAML_FILE_INDICATORS = {".yml", ".yaml", "docker-compose.yml", "docker-compose.yaml"}
+JSON_FILE_INDICATORS = {".json"}
+TOML_FILE_INDICATORS = {".toml", "pyproject.toml"}
+XML_FILE_INDICATORS = {".xml"}
 
 
 def extract_package_name(dep: str) -> str:
@@ -15,65 +104,87 @@ def extract_package_name(dep: str) -> str:
     return re.split(r"[>=~<]", dep)[0].strip()
 
 
+def _read_pyproject_dependencies(pyproject_file: Path) -> set[str]:
+    """Read dependencies from pyproject.toml file.
+
+    Args:
+        pyproject_file: Path to pyproject.toml
+
+    Returns:
+        Set of package names found in the file
+    """
+    dependencies = set()
+    if not pyproject_file.exists() or not toml_lib:
+        return dependencies
+
+    try:
+        with open(pyproject_file, "rb") as f:
+            data = toml_lib.load(f)
+
+        # Get dependencies from project.dependencies
+        if "project" in data and "dependencies" in data["project"]:
+            for dep in data["project"]["dependencies"]:
+                dependencies.add(extract_package_name(dep))
+
+        # Get dev dependencies
+        if "project" in data and "optional-dependencies" in data["project"]:
+            for group in data["project"]["optional-dependencies"].values():
+                for dep in group:
+                    dependencies.add(extract_package_name(dep))
+
+    except (OSError, ValueError, KeyError):
+        # OSError: file reading issues
+        # ValueError: TOML parsing errors
+        # KeyError: unexpected structure
+        pass
+
+    return dependencies
+
+
+def _read_requirements_file(req_path: Path) -> set[str]:
+    """Read dependencies from a requirements.txt file.
+
+    Args:
+        req_path: Path to requirements file
+
+    Returns:
+        Set of package names found in the file
+    """
+    dependencies = set()
+    if not req_path.exists():
+        return dependencies
+
+    try:
+        with open(req_path, encoding="utf-8") as f:
+            for raw_line in f:
+                line = raw_line.strip()
+                if line and not line.startswith("#") and not line.startswith("-"):
+                    dependencies.add(extract_package_name(line))
+    except (OSError, UnicodeDecodeError):
+        # OSError: file reading issues
+        # UnicodeDecodeError: binary files or encoding issues
+        pass
+
+    return dependencies
+
+
 def detect_project_dependencies(path: Path) -> set[str]:
-    """Detect project dependencies from pyproject.toml, requirements.txt, etc."""
+    """Detect project dependencies from pyproject.toml, requirements.txt, etc.
+
+    Args:
+        path: Path to project directory
+
+    Returns:
+        Set of all detected package names
+    """
     dependencies = set()
 
     # Check pyproject.toml
-    pyproject_file = path / "pyproject.toml"
-    if pyproject_file.exists():
-        toml_lib = None
-        try:
-            import tomllib
-
-            toml_lib = tomllib
-        except ImportError:
-            try:
-                import tomli
-
-                toml_lib = tomli
-            except ImportError:
-                pass
-
-        if toml_lib:
-            try:
-                with open(pyproject_file, "rb") as f:
-                    data = toml_lib.load(f)
-
-                # Get dependencies from project.dependencies
-                if "project" in data and "dependencies" in data["project"]:
-                    for dep in data["project"]["dependencies"]:
-                        dependencies.add(extract_package_name(dep))
-
-                # Get dev dependencies
-                if "project" in data and "optional-dependencies" in data["project"]:
-                    for group in data["project"]["optional-dependencies"].values():
-                        for dep in group:
-                            dependencies.add(extract_package_name(dep))
-
-            except Exception:
-                pass
+    dependencies.update(_read_pyproject_dependencies(path / "pyproject.toml"))
 
     # Check requirements.txt files
-    for req_file in [
-        "requirements.txt",
-        "requirements-dev.txt",
-        "dev-requirements.txt",
-    ]:
-        req_path = path / req_file
-        if req_path.exists():
-            try:
-                with open(req_path, encoding="utf-8") as f:
-                    for raw_line in f:
-                        line = raw_line.strip()
-                        if (
-                            line
-                            and not line.startswith("#")
-                            and not line.startswith("-")
-                        ):
-                            dependencies.add(extract_package_name(line))
-            except Exception:
-                pass
+    for req_file in ["requirements.txt", "requirements-dev.txt", "dev-requirements.txt"]:
+        dependencies.update(_read_requirements_file(path / req_file))
 
     return dependencies
 
@@ -91,16 +202,16 @@ def read_gitignore_patterns(path: Path) -> set[str]:
                     # Skip empty lines and comments
                     if line and not line.startswith("#"):
                         patterns.add(line)
-        except Exception:
+        except (OSError, UnicodeDecodeError):
             # If we can't read gitignore, continue without it
+            # OSError: file reading issues
+            # UnicodeDecodeError: binary or encoding issues
             pass
 
     return patterns
 
 
-def is_ignored_by_gitignore(
-    file_path: Path, project_root: Path, gitignore_patterns: set[str]
-) -> bool:
+def is_ignored_by_gitignore(file_path: Path, project_root: Path, gitignore_patterns: set[str]) -> bool:
     """Check if a file should be ignored based on gitignore patterns."""
     try:
         # Get relative path from project root
@@ -109,20 +220,16 @@ def is_ignored_by_gitignore(
 
         # Check if file is in any parent directory that should be ignored
         for part in rel_path.parts:
-            if part in {".git", ".venv", "venv", "env", "node_modules", "__pycache__"}:
+            if part in ALWAYS_IGNORED_DIRS:
                 return True
 
         for pattern in gitignore_patterns:
             # Handle directory patterns (ending with /)
             if pattern.endswith("/"):
-                if fnmatch.fnmatch(rel_path_str + "/", pattern) or fnmatch.fnmatch(
-                    rel_path_str, pattern[:-1]
-                ):
+                if fnmatch.fnmatch(rel_path_str + "/", pattern) or fnmatch.fnmatch(rel_path_str, pattern[:-1]):
                     return True
             # Handle file patterns
-            elif fnmatch.fnmatch(rel_path_str, pattern) or fnmatch.fnmatch(
-                file_path.name, pattern
-            ):
+            elif fnmatch.fnmatch(rel_path_str, pattern) or fnmatch.fnmatch(file_path.name, pattern):
                 return True
 
         return False
@@ -144,20 +251,7 @@ def discover_files(path: Path) -> set[str]:
 
     # Add some basic patterns if no gitignore exists
     if len(gitignore_patterns) <= 2:  # Only .git patterns added
-        gitignore_patterns.update(
-            {
-                "__pycache__/",
-                "node_modules/",
-                ".venv/",
-                "venv/",
-                "env/",
-                "build/",
-                "dist/",
-                ".pytest_cache/",
-                ".pyrefly_cache/",
-                ".ruff_cache/",
-            }
-        )
+        gitignore_patterns.update(DEFAULT_GITIGNORE_PATTERNS)
 
     for file_path in path.rglob("*"):
         if file_path.is_file():
@@ -173,20 +267,7 @@ def discover_files(path: Path) -> set[str]:
 
 def detect_python(files: set[str]) -> bool:
     """Detect if this is a Python project."""
-    python_indicators = {
-        "setup.py",
-        "pyproject.toml",
-        "requirements.txt",
-        "pipfile",
-        "poetry.lock",
-        "setup.cfg",
-        "tox.ini",
-        "pytest.ini",
-        ".py",
-        "manage.py",
-        "__init__.py",
-    }
-    return bool(python_indicators & files)
+    return bool(PYTHON_INDICATORS & files)
 
 
 def detect_uv_lock(files: set[str]) -> bool:
@@ -196,66 +277,27 @@ def detect_uv_lock(files: set[str]) -> bool:
 
 def detect_javascript(files: set[str]) -> bool:
     """Detect if this is a JavaScript project."""
-    js_indicators = {
-        "package.json",
-        "yarn.lock",
-        "package-lock.json",
-        "npm-shrinkwrap.json",
-        ".js",
-        ".mjs",
-        ".cjs",
-        "webpack.config.js",
-        "vite.config.js",
-        "rollup.config.js",
-        "babel.config.js",
-        ".babelrc",
-    }
-    return bool(js_indicators & files)
+    return bool(JAVASCRIPT_INDICATORS & files)
 
 
 def detect_typescript(files: set[str]) -> bool:
     """Detect if project uses TypeScript."""
-    ts_indicators = {
-        "tsconfig.json",
-        "tsconfig.base.json",
-        "tsconfig.build.json",
-        ".ts",
-        ".tsx",
-        ".d.ts",
-    }
-    return bool(ts_indicators & files)
+    return bool(TYPESCRIPT_INDICATORS & files)
 
 
 def detect_jsx(files: set[str]) -> bool:
     """Detect if project uses JSX/React."""
-    jsx_indicators = {
-        ".jsx",
-        ".tsx",
-        "next.config.js",
-        "gatsby-config.js",
-        "react-scripts",
-        ".storybook",
-    }
-    return bool(jsx_indicators & files)
+    return bool(JSX_INDICATORS & files)
 
 
 def detect_go(files: set[str]) -> bool:
     """Detect if this is a Go project."""
-    go_indicators = {"go.mod", "go.sum", "main.go", ".go", "vendor"}
-    return bool(go_indicators & files)
+    return bool(GO_INDICATORS & files)
 
 
 def detect_docker(files: set[str]) -> bool:
     """Detect if project uses Docker."""
-    docker_indicators = {
-        "dockerfile",
-        "docker-compose.yml",
-        "docker-compose.yaml",
-        ".dockerignore",
-        "dockerfile.dev",
-        "dockerfile.prod",
-    }
-    return bool(docker_indicators & files)
+    return bool(DOCKER_INDICATORS & files)
 
 
 def detect_github_actions(files: set[str], path: Path) -> bool:
@@ -263,9 +305,7 @@ def detect_github_actions(files: set[str], path: Path) -> bool:
     # Check for .github/workflows directory
     github_workflows = path / ".github" / "workflows"
     if github_workflows.exists() and github_workflows.is_dir():
-        workflow_files = list(github_workflows.glob("*.yml")) + list(
-            github_workflows.glob("*.yaml")
-        )
+        workflow_files = list(github_workflows.glob("*.yml")) + list(github_workflows.glob("*.yaml"))
         return len(workflow_files) > 0
     return False
 
@@ -277,59 +317,46 @@ def has_file_type(files: set[str], indicators: set[str]) -> bool:
 
 def detect_yaml_files(files: set[str]) -> bool:
     """Detect if project has YAML files."""
-    return has_file_type(
-        files, {".yml", ".yaml", "docker-compose.yml", "docker-compose.yaml"}
-    )
+    return has_file_type(files, YAML_FILE_INDICATORS)
 
 
 def detect_json_files(files: set[str]) -> bool:
     """Detect if project has JSON files."""
-    return has_file_type(files, {".json"})
+    return has_file_type(files, JSON_FILE_INDICATORS)
 
 
 def detect_toml_files(files: set[str]) -> bool:
     """Detect if project has TOML files."""
-    return has_file_type(files, {".toml", "pyproject.toml"})
+    return has_file_type(files, TOML_FILE_INDICATORS)
 
 
 def detect_xml_files(files: set[str]) -> bool:
     """Detect if project has XML files."""
-    return has_file_type(files, {".xml"})
+    return has_file_type(files, XML_FILE_INDICATORS)
 
 
 def detect_python_version(path: Path) -> Optional[str]:
     """Attempt to detect Python version from project files."""
     # Check pyproject.toml
     pyproject_file = path / "pyproject.toml"
-    if pyproject_file.exists():
-        toml_lib = None
+    if pyproject_file.exists() and toml_lib:
         try:
-            import tomllib
+            with open(pyproject_file, "rb") as f:
+                data = toml_lib.load(f)
 
-            toml_lib = tomllib
-        except ImportError:
-            try:
-                import tomli
-
-                toml_lib = tomli
-            except ImportError:
-                pass
-
-        if toml_lib:
-            try:
-                with open(pyproject_file, "rb") as f:
-                    data = toml_lib.load(f)
-
-                # Check requires-python
-                project = data.get("project", {})
-                requires_python = project.get("requires-python")
-                if requires_python and isinstance(requires_python, str):
-                    # Extract version like ">=3.14" -> "python3.14"
-                    if ">=" in requires_python:
-                        version = requires_python.split(">=")[1].strip()
-                        return f"python{version}"
-            except Exception:
-                pass
+            # Check requires-python
+            project = data.get("project", {})
+            requires_python = project.get("requires-python")
+            if requires_python and isinstance(requires_python, str):
+                # Extract version like ">=3.14" -> "python3.14"
+                if ">=" in requires_python:
+                    version = requires_python.split(">=")[1].strip()
+                    return f"python{version}"
+        except (OSError, ValueError, KeyError):
+            # OSError: file reading issues
+            # ValueError: TOML parsing errors
+            # KeyError: unexpected structure
+            pass
 
     # Check .python-version file
     python_version_file = path / ".python-version"
@@ -339,7 +366,9 @@ def detect_python_version(path: Path) -> Optional[str]:
             if version and not version.startswith("python"):
                 return f"python{version}"
             return version if version else None
-        except Exception:
+        except (OSError, UnicodeDecodeError):
+            # OSError: file reading issues
+            # UnicodeDecodeError: binary or encoding issues
             pass
 
     return None
@@ -441,9 +470,7 @@ def discover_config(path: Path) -> PreCommitConfig:
 
 def main() -> None:
     """Main function for CLI usage."""
-    parser = argparse.ArgumentParser(
-        description="Discover project technologies and generate config"
-    )
+    parser = argparse.ArgumentParser(description="Discover project technologies and generate config")
     parser.add_argument(
         "--path",
         type=Path,

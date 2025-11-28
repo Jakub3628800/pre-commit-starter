@@ -5,6 +5,9 @@ from typing import Optional
 
 import yaml
 
+# Default Python version for workflows when not detected
+DEFAULT_PYTHON_VERSION = "3.11"
+
 
 def parse_precommit_config(config_path: Path) -> dict:
     """Parse .pre-commit-config.yaml and extract metadata.
@@ -15,8 +18,12 @@ def parse_precommit_config(config_path: Path) -> dict:
     Returns:
         Dict with parsed config metadata
     """
-    with open(config_path) as f:
-        config = yaml.safe_load(f)
+    try:
+        with open(config_path, encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+    except (OSError, UnicodeDecodeError, yaml.YAMLError):
+        # Return default if file can't be read or parsed
+        return {"python_version": DEFAULT_PYTHON_VERSION}
 
     python_version = None
     if config and isinstance(config, dict) and "default_language_version" in config:
@@ -28,7 +35,7 @@ def parse_precommit_config(config_path: Path) -> dict:
                 python_version = python_ver.replace("python", "")
 
     return {
-        "python_version": python_version or "3.11",  # Default to 3.11
+        "python_version": python_version or DEFAULT_PYTHON_VERSION,
     }
 
 
@@ -55,7 +62,7 @@ def generate_workflow(
         metadata = parse_precommit_config(config_path)
     else:
         # Use defaults if no config found
-        metadata = {"python_version": "3.11"}
+        metadata = {"python_version": DEFAULT_PYTHON_VERSION}
 
     workflow = f"""---
 name: pre-commit

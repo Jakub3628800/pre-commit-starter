@@ -75,9 +75,7 @@ class TestGitignoreLogic:
         patterns = set()
 
         # Test hardcoded exclusions in is_ignored_by_gitignore
-        venv_file = (
-            tmp_path / ".venv" / "lib" / "python3.9" / "site-packages" / "package.py"
-        )
+        venv_file = tmp_path / ".venv" / "lib" / "python3.9" / "site-packages" / "package.py"
         git_file = tmp_path / ".git" / "objects" / "abc123"
         node_file = tmp_path / "node_modules" / "package" / "index.js"
 
@@ -144,9 +142,16 @@ requires-python = ">=3.9"
 """
         (tmp_path / "pyproject.toml").write_text(pyproject_content)
 
-        with patch.dict("sys.modules", {"tomllib": None, "tomli": None}):
+        # Patch the module-level toml_lib variable
+        from pre_commit_tools import discover
+
+        original_toml_lib = discover.toml_lib
+        try:
+            discover.toml_lib = None
             version = detect_python_version(tmp_path)
             assert version is None
+        finally:
+            discover.toml_lib = original_toml_lib
 
 
 class TestConfigFileDiscovery:
@@ -204,9 +209,7 @@ name = "test"
 dependencies = ["requests"]
 """)
 
-        with patch(
-            "sys.argv", ["discover", "--path", str(tmp_path), "--output", "json"]
-        ):
+        with patch("sys.argv", ["discover", "--path", str(tmp_path), "--output", "json"]):
             discover_main()
 
         captured = capsys.readouterr()
@@ -221,9 +224,7 @@ dependencies = ["requests"]
         # Create a simple project
         (tmp_path / "package.json").write_text('{"name": "test"}')
 
-        with patch(
-            "sys.argv", ["discover", "--path", str(tmp_path), "--output", "yaml"]
-        ):
+        with patch("sys.argv", ["discover", "--path", str(tmp_path), "--output", "yaml"]):
             with patch("yaml.dump") as mock_yaml_dump:
                 mock_yaml_dump.return_value = "yaml output"
                 discover_main()

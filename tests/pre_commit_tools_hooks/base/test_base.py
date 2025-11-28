@@ -132,11 +132,7 @@ def test_yaml_indentation():
         assert hook_line.startswith("  - id:")
 
     # Check hook properties are indented 4 spaces
-    name_lines = [
-        line
-        for line in lines
-        if "name:" in line and not line.strip().startswith("name:")
-    ]
+    name_lines = [line for line in lines if "name:" in line and not line.strip().startswith("name:")]
     for name_line in name_lines:
         assert name_line.startswith("    name:")
 
