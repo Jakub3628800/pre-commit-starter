@@ -117,7 +117,9 @@ class TestCheckExportsFeature:
 
     def test_check_exports_with_other_python_hooks(self):
         """Test that check_exports works alongside other Python hooks."""
-        config = PreCommitConfig(python=True, check_exports=True, uv_lock=True, pyrefly_args=["--strict"])
+        config = PreCommitConfig(
+            python=True, check_exports=True, uv_lock=True, pyrefly_args=["--strict"]
+        )
         result = render_config(config)
 
         # All three should be present

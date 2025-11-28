@@ -31,9 +31,10 @@ dev = [
 [project.scripts]
 pre-commit-tools = "pre_commit_tools.main:main"
 check-exports = "pre_commit_tools.check_exports.cli:main"
+generate-workflow = "pre_commit_tools.generate_workflow.cli:main"
 
 [tool.setuptools]
-packages = ["pre_commit_tools", "pre_commit_tools.check_exports", "pre_commit_tools.hook_templates"]
+packages = ["pre_commit_tools", "pre_commit_tools.check_exports", "pre_commit_tools.hook_templates", "pre_commit_tools.generate_workflow"]
 
 [tool.setuptools.package-data]
 "*" = ["py.typed"]

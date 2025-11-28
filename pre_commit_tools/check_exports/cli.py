@@ -5,7 +5,11 @@ import sys
 from pathlib import Path
 
 from pre_commit_tools.check_exports.validator import validate_libraries
-from pre_commit_tools.check_exports.reporter import report_violations, report_success, report_summary
+from pre_commit_tools.check_exports.reporter import (
+    report_violations,
+    report_success,
+    report_summary,
+)
 from pre_commit_tools.check_exports.config import Config
 
 
@@ -115,7 +119,9 @@ def main() -> int:
     env_config = Config.load_from_env()
     file_config = None
     if not lib_paths:
-        file_config = Config.load_from_file(Path(parsed_args.config) if parsed_args.config else None)
+        file_config = Config.load_from_file(
+            Path(parsed_args.config) if parsed_args.config else None
+        )
 
     # Merge configs (CLI args take precedence)
     if env_config:
@@ -124,19 +130,27 @@ def main() -> int:
         quiet = parsed_args.quiet or env_config.quiet
         no_color = parsed_args.no_color or env_config.no_color
         verbose = parsed_args.verbose or env_config.verbose
-        exclude_patterns = _parse_exclude_patterns(parsed_args.exclude, env_config.exclude_patterns)
+        exclude_patterns = _parse_exclude_patterns(
+            parsed_args.exclude, env_config.exclude_patterns
+        )
 
         max_violations = parsed_args.max_violations or env_config.max_violations
-        public_submodules = _parse_list(parsed_args.public_submodules) or env_config.public_submodules
+        public_submodules = (
+            _parse_list(parsed_args.public_submodules) or env_config.public_submodules
+        )
     elif file_config:
         lib_paths = lib_paths or file_config.libraries
         json_format = parsed_args.json or file_config.json_format
         quiet = parsed_args.quiet or file_config.quiet
         no_color = parsed_args.no_color or file_config.no_color
         verbose = parsed_args.verbose or file_config.verbose
-        exclude_patterns = _parse_exclude_patterns(parsed_args.exclude, file_config.exclude_patterns)
+        exclude_patterns = _parse_exclude_patterns(
+            parsed_args.exclude, file_config.exclude_patterns
+        )
         max_violations = parsed_args.max_violations or file_config.max_violations
-        public_submodules = _parse_list(parsed_args.public_submodules) or file_config.public_submodules
+        public_submodules = (
+            _parse_list(parsed_args.public_submodules) or file_config.public_submodules
+        )
     else:
         json_format = parsed_args.json
         quiet = parsed_args.quiet
@@ -151,7 +165,9 @@ def main() -> int:
         return 1
 
     # Validate all libraries
-    violations, stats = validate_libraries(lib_paths, exclude_patterns, public_submodules, verbose)
+    violations, stats = validate_libraries(
+        lib_paths, exclude_patterns, public_submodules, verbose
+    )
 
     # Filter out warnings from exit code determination
     error_violations = [v for v in violations if not v.is_warning]
@@ -168,7 +184,9 @@ def main() -> int:
     # Report results
     use_colors = not no_color
     if violations:
-        report_violations(violations, format="json" if json_format else "text", use_colors=use_colors)
+        report_violations(
+            violations, format="json" if json_format else "text", use_colors=use_colors
+        )
 
         if verbose:
             report_summary(
@@ -202,7 +220,9 @@ def main() -> int:
     return 0
 
 
-def _parse_exclude_patterns(cli_exclude: list | None, config_exclude: list | None = None) -> list:
+def _parse_exclude_patterns(
+    cli_exclude: list | None, config_exclude: list | None = None
+) -> list:
     """Parse exclude patterns from CLI and config.
 
     Args:

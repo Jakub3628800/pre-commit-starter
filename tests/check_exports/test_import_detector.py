@@ -17,7 +17,9 @@ class TestFindImportsViaAST:
         # Create external code importing from library
         external_dir = temp_codebase / "external"
         external_dir.mkdir()
-        (external_dir / "app.py").write_text("from mylib import func\nfrom mylib.core import helper")
+        (external_dir / "app.py").write_text(
+            "from mylib import func\nfrom mylib.core import helper"
+        )
 
         imports = find_imports_via_ast(lib_dir)
 
