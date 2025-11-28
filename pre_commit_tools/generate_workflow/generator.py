@@ -19,11 +19,13 @@ def parse_precommit_config(config_path: Path) -> dict:
         config = yaml.safe_load(f)
 
     python_version = None
-    if "default_language_version" in config:
-        python_ver = config["default_language_version"].get("python")
-        if python_ver:
-            # Extract version like "3.14" from "python3.14"
-            python_version = python_ver.replace("python", "")
+    if config and isinstance(config, dict) and "default_language_version" in config:
+        lang_versions = config.get("default_language_version")
+        if isinstance(lang_versions, dict):
+            python_ver = lang_versions.get("python")
+            if python_ver and isinstance(python_ver, str):
+                # Extract version like "3.14" from "python3.14"
+                python_version = python_ver.replace("python", "")
 
     return {
         "python_version": python_version or "3.11",  # Default to 3.11
